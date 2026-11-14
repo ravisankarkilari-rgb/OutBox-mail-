@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd employee-management-system/frontend && npm install && npm run build",
+  "outputDirectory": "employee-management-system/frontend/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
