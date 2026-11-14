@@ -4,6 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
+const fs = require('fs');
 
 const authRoutes = require('./routes/auth.routes');
 const emailRoutes = require('./routes/email.routes');
@@ -12,12 +14,17 @@ const { frontendUrl } = require('./config/constants');
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers (configured to allow Google Auth & fonts)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // CORS
 app.use(cors({
-  origin: true, // Allow frontend dev server
+  origin: true, // Allow frontend dev server and production origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -53,6 +60,18 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/emails', emailRoutes);
+
+// Serve frontend build in production / single-service deployment
+const frontendDist = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 // 404 & Error handlers
 app.use(notFound);

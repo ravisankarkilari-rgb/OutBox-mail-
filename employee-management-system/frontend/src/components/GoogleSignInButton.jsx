@@ -179,3 +179,4 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
     </div>
   );
 };
+

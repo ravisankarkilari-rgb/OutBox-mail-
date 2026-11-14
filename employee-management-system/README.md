@@ -60,3 +60,32 @@ npm run dev
 Click the purple **"Click to Fill Demo Account"** button on the login screen, or enter:
 - **Email**: `admin@company.com`
 - **Password**: `Admin@123`
+
+---
+
+## 6. Deployment Guide
+
+Because Outbox Mail includes an active background email scheduler service (`schedulerService.start()`), continuous server platforms (Render, Railway, Fly.io, or Docker VPS) are ideal.
+
+### Option A: Free 1-Click Deployment on Render.com (Recommended)
+1. Push this repository to your GitHub account:
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/outbox-mail.git
+   git branch -M main
+   git push -u origin main
+   ```
+2. Go to [render.com](https://render.com) and click **New + > Blueprint**.
+3. Connect your GitHub repository. Render will automatically read `render.yaml` and deploy both the Frontend & Backend together on the free tier!
+
+### Option B: Deploy with Docker (Any VPS, AWS, DigitalOcean)
+Run the production multi-stage container with 1 command:
+```bash
+docker compose up -d --build
+```
+The application will be running at `http://localhost:5000` with the built frontend served directly and SQLite data saved in the persistent `outbox_data` volume.
+
+### Option C: Deploy on Railway
+1. Install Railway CLI or connect via GitHub: `railway init`
+2. Run: `railway up`
+3. Add environment variables from `.env.example`.
+

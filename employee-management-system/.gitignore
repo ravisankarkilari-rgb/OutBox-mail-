@@ -1,9 +1,12 @@
 node_modules/
 .env
+.env.local
 dist/
 build/
 .DS_Store
 *.log
+*.db
+*.db-journal
 .prisma/
 coverage/
 .nyc_output/
