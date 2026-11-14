@@ -8,9 +8,9 @@ class AuthService {
   async login(email, password) {
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { employee: { include: { department: true } } },
+      include: { smtpConfig: true },
     });
-    if (!user || !user.isActive) throw new AppError('Invalid email or password', 401);
+    if (!user) throw new AppError('Invalid email or password', 401);
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new AppError('Invalid email or password', 401);
@@ -22,11 +22,20 @@ class AuthService {
     return { user: safeUser, accessToken, refreshToken };
   }
 
-  async register(email, password, role = 'EMPLOYEE') {
+  async register(email, password, role = 'USER', name = null) {
     const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) throw new AppError('Email already in use', 409);
+    if (existing) throw new AppError('Email already registered. Please login.', 409);
+
     const hashedPassword = await bcrypt.hash(password, bcryptRounds);
-    const user = await prisma.user.create({ data: { email, password: hashedPassword, role } });
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: role || 'USER',
+        name: name || email.split('@')[0],
+      },
+    });
+
     const { password: _, ...safeUser } = user;
     return safeUser;
   }
@@ -35,7 +44,7 @@ class AuthService {
     try {
       const decoded = verifyRefreshToken(token);
       const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-      if (!user || !user.isActive) throw new AppError('Invalid token', 401);
+      if (!user) throw new AppError('Invalid token', 401);
       const payload = { userId: user.id, email: user.email, role: user.role };
       return { accessToken: generateAccessToken(payload) };
     } catch {
@@ -46,13 +55,35 @@ class AuthService {
   async getMe(userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { employee: { include: { department: true } } },
+      include: { smtpConfig: true },
     });
     if (!user) throw new AppError('User not found', 404);
     const { password: _, ...safeUser } = user;
     return safeUser;
   }
+
+  async saveSmtpConfig(userId, config) {
+    return prisma.smtpConfig.upsert({
+      where: { userId },
+      update: {
+        host: config.host,
+        port: parseInt(config.port, 10),
+        secure: config.port === 465,
+        userEmail: config.userEmail,
+        password: config.password,
+        fromName: config.fromName,
+      },
+      create: {
+        userId,
+        host: config.host,
+        port: parseInt(config.port, 10),
+        secure: config.port === 465,
+        userEmail: config.userEmail,
+        password: config.password,
+        fromName: config.fromName,
+      },
+    });
+  }
 }
 
 module.exports = new AuthService();
-

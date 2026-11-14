@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Building, Lock, Mail, UserPlus, ArrowRight } from 'lucide-react';
+import { Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
 
 export const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('EMPLOYEE');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const { showToast } = useToast();
@@ -28,7 +27,7 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      await register(email, password, role);
+      await register(email, password, 'USER');
       showToast('Account registered successfully! Please sign in.', 'success');
       navigate('/login');
     } catch (err) {
@@ -47,7 +46,7 @@ export const RegisterPage = () => {
             <UserPlus className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-bold text-slate-800">Create Account</h2>
-          <p className="text-sm text-slate-500 mt-1">Join the Employee Management System</p>
+          <p className="text-sm text-slate-500 mt-1">Start scheduling and automating your outbound emails</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,20 +69,6 @@ export const RegisterPage = () => {
 
           <div>
             <label className="block text-xs font-semibold uppercase text-slate-600 mb-1.5 tracking-wider">
-              Role
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm text-slate-800 transition bg-white"
-            >
-              <option value="EMPLOYEE">Employee</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1.5 tracking-wider">
               Password
             </label>
             <div className="relative">
@@ -92,7 +77,7 @@ export const RegisterPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 8 chars, Aa1@..."
+                placeholder="At least 6 characters"
                 required
                 className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm text-slate-800 transition"
               />
@@ -136,4 +121,3 @@ export const RegisterPage = () => {
     </div>
   );
 };
-

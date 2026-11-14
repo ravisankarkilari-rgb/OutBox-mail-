@@ -1,7 +1,8 @@
-// Prisma Schema for SQLite (Zero-Setup Development Mode)
+// Prisma Schema for Outbox Mail Scheduler (SQLite)
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -13,77 +14,50 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
-  role      String   @default("EMPLOYEE")
-  isActive  Boolean  @default(true)
+  name      String?
+  role      String   @default("USER")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  employee Employee?
+  emails     ScheduledEmail[]
+  smtpConfig SmtpConfig?
 
-  @@index([email])
   @@map("users")
 }
 
-model Department {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+model SmtpConfig {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  host      String   @default("smtp.gmail.com")
+  port      Int      @default(587)
+  secure    Boolean  @default(false)
+  userEmail String
+  password  String
+  fromName  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  employees Employee[]
-
-  @@index([name])
-  @@map("departments")
+  @@map("smtp_configs")
 }
 
-model Employee {
-  id           String   @id @default(cuid())
-  employeeId   String   @unique
-  firstName    String
-  lastName     String
-  email        String   @unique
-  phone        String?
-  designation  String
-  joiningDate  DateTime
-  salary       Float
-  status       String   @default("ACTIVE")
-  profileImage String?
-  address      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model ScheduledEmail {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipients     String    // Comma-separated list of emails or up to 100+ emails
+  subject        String
+  body           String
+  scheduledAt    DateTime
+  status         String    @default("SCHEDULED") // SCHEDULED, SENDING, SENT, FAILED, CANCELLED
+  sentAt         DateTime?
+  errorMessage   String?
+  recipientCount Int       @default(1)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id])
-
-  evaluations  PerformanceEvaluation[]
-
-  @@index([employeeId])
-  @@index([departmentId])
+  @@index([userId])
   @@index([status])
-  @@index([email])
-  @@map("employees")
-}
-
-model PerformanceEvaluation {
-  id             String   @id @default(cuid())
-  evaluationDate DateTime
-  rating         String   @default("GOOD")
-  score          Int      @default(0)
-  comments       String?
-  goals          String?
-  achievements   String?
-  evaluatorName  String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  employeeId     String
-  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  @@index([employeeId])
-  @@index([evaluationDate])
-  @@map("performance_evaluations")
+  @@index([scheduledAt])
+  @@map("scheduled_emails")
 }

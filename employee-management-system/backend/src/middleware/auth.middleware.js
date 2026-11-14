@@ -2,9 +2,6 @@ const { verifyAccessToken } = require('../utils/jwt');
 const { sendError } = require('../utils/response');
 const { prisma } = require('../config/database');
 
-/**
- * authenticate — verifies the Bearer JWT and attaches req.user
- */
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -17,11 +14,11 @@ const authenticate = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      include: { employee: { include: { department: true } } },
+      include: { smtpConfig: true },
     });
 
-    if (!user || !user.isActive) {
-      return sendError(res, 'User not found or deactivated', 401);
+    if (!user) {
+      return sendError(res, 'User session not found', 401);
     }
 
     req.user = user;
@@ -37,9 +34,6 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-/**
- * authorize — restricts access to specified roles
- */
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) return sendError(res, 'Unauthorized', 401);
@@ -51,4 +45,3 @@ const authorize = (...roles) => {
 };
 
 module.exports = { authenticate, authorize };
-

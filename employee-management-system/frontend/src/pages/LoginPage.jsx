@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Building, Lock, Mail, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -15,19 +15,15 @@ export const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      showToast('Please fill in all fields', 'error');
+      showToast('Please fill in email and password', 'error');
       return;
     }
 
     setLoading(true);
     try {
-      const user = await login(email, password);
-      showToast('Logged in successfully', 'success');
-      if (user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/employee/dashboard');
-      }
+      await login(email, password);
+      showToast('Welcome back to Outbox Mail!', 'success');
+      navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Login failed';
       showToast(msg, 'error');
@@ -36,9 +32,9 @@ export const LoginPage = () => {
     }
   };
 
-  const fillCredentials = (userEmail, userPass) => {
-    setEmail(userEmail);
-    setPassword(userPass);
+  const fillDemo = () => {
+    setEmail('admin@company.com');
+    setPassword('Admin@123');
   };
 
   return (
@@ -46,35 +42,22 @@ export const LoginPage = () => {
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
         <div className="text-center mb-8">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 mb-4">
-            <Building className="w-8 h-8" />
+            <Mail className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800">Welcome Back</h2>
-          <p className="text-sm text-slate-500 mt-1">Sign in to your Employee Management account</p>
+          <h2 className="text-2xl font-bold text-slate-800">Outbox Mail</h2>
+          <p className="text-sm text-slate-500 mt-1">Automated Scheduled Email Dispatcher</p>
         </div>
 
-        {/* Demo Fast Login Pills */}
+        {/* Demo Fast Login */}
         <div className="mb-6 p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 text-center">
-            Quick Fill Demo Credentials
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => fillCredentials('admin@company.com', 'Admin@123')}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-white text-indigo-700 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition shadow-sm"
-            >
-              <ShieldCheck className="w-4 h-4 text-indigo-600" />
-              <span>Admin</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillCredentials('john.doe@company.com', 'Employee@123')}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-white text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-50 transition shadow-sm"
-            >
-              <UserCheck className="w-4 h-4 text-emerald-600" />
-              <span>Employee</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={fillDemo}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold bg-white text-indigo-700 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition shadow-sm"
+          >
+            <Sparkles className="w-4 h-4 text-indigo-600" />
+            <span>Click to Fill Demo Account (admin@company.com)</span>
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,7 +71,7 @@ export const LoginPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
+                placeholder="you@company.com"
                 required
                 className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm text-slate-800 transition"
               />
@@ -117,7 +100,7 @@ export const LoginPage = () => {
             disabled={loading}
             className="w-full py-3 px-4 mt-2 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-md shadow-sky-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50"
           >
-            <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+            <span>{loading ? 'Signing in...' : 'Sign In to Outbox'}</span>
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
@@ -132,4 +115,3 @@ export const LoginPage = () => {
     </div>
   );
 };
-

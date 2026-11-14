@@ -1,0 +1,63 @@
+// Prisma Schema for Outbox Mail Scheduler (SQLite)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  emails     ScheduledEmail[]
+  smtpConfig SmtpConfig?
+
+  @@map("users")
+}
+
+model SmtpConfig {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  host      String   @default("smtp.gmail.com")
+  port      Int      @default(587)
+  secure    Boolean  @default(false)
+  userEmail String
+  password  String
+  fromName  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("smtp_configs")
+}
+
+model ScheduledEmail {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipients     String // Comma-separated list of emails or up to 100+ emails
+  subject        String
+  body           String
+  scheduledAt    DateTime
+  status         String    @default("SCHEDULED") // SCHEDULED, SENDING, SENT, FAILED, CANCELLED
+  sentAt         DateTime?
+  errorMessage   String?
+  recipientCount Int       @default(1)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("scheduled_emails")
+}

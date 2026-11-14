@@ -1,6 +1,5 @@
 /**
  * Auth Service Unit Tests
- * Tests auth logic directly without HTTP layer (no port binding needed).
  */
 
 jest.mock('../config/database', () => ({
@@ -11,7 +10,6 @@ jest.mock('../config/database', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
-    employee: {},
     $connect: jest.fn(),
     $disconnect: jest.fn(),
   },
@@ -21,7 +19,6 @@ jest.mock('../config/database', () => ({
 const bcrypt = require('bcryptjs');
 const { prisma } = require('../config/database');
 
-// Load service AFTER mock is set up
 let authService;
 beforeAll(() => {
   authService = require('../services/auth.service');
@@ -39,8 +36,6 @@ describe('AuthService', () => {
     email: 'admin@company.com',
     password: hashedPassword,
     role: 'ADMIN',
-    isActive: true,
-    employee: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -53,7 +48,7 @@ describe('AuthService', () => {
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
       expect(result.user.email).toBe('admin@company.com');
-      expect(result.user.password).toBeUndefined(); // password stripped
+      expect(result.user.password).toBeUndefined();
     });
 
     it('should throw 401 on wrong password', async () => {
@@ -69,13 +64,6 @@ describe('AuthService', () => {
         statusCode: 401,
       });
     });
-
-    it('should throw 401 when user is inactive', async () => {
-      prisma.user.findUnique.mockResolvedValue({ ...mockUser, isActive: false });
-      await expect(authService.login('admin@company.com', 'Admin@123')).rejects.toMatchObject({
-        statusCode: 401,
-      });
-    });
   });
 
   describe('register()', () => {
@@ -84,8 +72,7 @@ describe('AuthService', () => {
       prisma.user.create.mockResolvedValue({
         id: 'new-user',
         email: 'newuser@test.com',
-        role: 'EMPLOYEE',
-        isActive: true,
+        role: 'USER',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -105,7 +92,7 @@ describe('AuthService', () => {
 
   describe('getMe()', () => {
     it('should return user by ID without password', async () => {
-      prisma.user.findUnique.mockResolvedValue({ ...mockUser, employee: null });
+      prisma.user.findUnique.mockResolvedValue(mockUser);
       const user = await authService.getMe('user-1');
       expect(user.id).toBe('user-1');
       expect(user.password).toBeUndefined();

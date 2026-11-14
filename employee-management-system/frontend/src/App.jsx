@@ -7,19 +7,16 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Pages
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { AdminDashboardPage } from './pages/AdminDashboardPage';
-import { EmployeesPage } from './pages/EmployeesPage';
-import { EmployeeDetailPage } from './pages/EmployeeDetailPage';
-import { DepartmentsPage } from './pages/DepartmentsPage';
-import { PerformancePage } from './pages/PerformancePage';
-import { ReportsPage } from './pages/ReportsPage';
-import { EmployeePortalPage } from './pages/EmployeePortalPage';
-import { UnauthorizedPage } from './pages/UnauthorizedPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ComposePage } from './pages/ComposePage';
+import { OutboxPage } from './pages/OutboxPage';
+import { SentPage } from './pages/SentPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
 const RootRedirect = () => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -29,9 +26,7 @@ const RootRedirect = () => {
     );
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
-  return <Navigate to="/employee/dashboard" replace />;
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 };
 
 export const App = () => {
@@ -41,33 +36,22 @@ export const App = () => {
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-      {/* Admin Protected Routes */}
-      <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+      {/* Protected Outbox Mail Routes */}
+      <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/employees" element={<EmployeesPage />} />
-          <Route path="/admin/employees/:id" element={<EmployeeDetailPage />} />
-          <Route path="/admin/departments" element={<DepartmentsPage />} />
-          <Route path="/admin/performance" element={<PerformancePage />} />
-          <Route path="/admin/reports" element={<ReportsPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/compose" element={<ComposePage />} />
+          <Route path="/outbox" element={<OutboxPage />} />
+          <Route path="/sent" element={<SentPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 
-      {/* Employee Protected Routes */}
-      <Route element={<ProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']} />}>
-        <Route element={<MainLayout />}>
-          <Route path="/employee/dashboard" element={<EmployeePortalPage />} />
-          <Route path="/employee/profile" element={<EmployeePortalPage />} />
-        </Route>
-      </Route>
-
-      {/* 404 Fallback */}
+      {/* Fallback */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
 
 export default App;
-
