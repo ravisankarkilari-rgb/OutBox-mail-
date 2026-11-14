@@ -8,7 +8,7 @@ import { Settings, Save, ShieldCheck, Mail, Info, Key, Server } from 'lucide-rea
 export const SettingsPage = () => {
   const { user } = useAuth();
   const [host, setHost] = useState('smtp.gmail.com');
-  const [port, setPort] = useState(587);
+  const [port, setPort] = useState(465);
   const [userEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fromName, setFromName] = useState('');
@@ -19,7 +19,7 @@ export const SettingsPage = () => {
   useEffect(() => {
     if (user?.smtpConfig) {
       setHost(user.smtpConfig.host || 'smtp.gmail.com');
-      setPort(user.smtpConfig.port || 587);
+      setPort(user.smtpConfig.port || 465);
       setUserEmail(user.smtpConfig.userEmail || '');
       setFromName(user.smtpConfig.fromName || '');
     } else if (user?.email) {
@@ -27,6 +27,12 @@ export const SettingsPage = () => {
       setFromName(user.email.split('@')[0]);
     }
   }, [user]);
+
+  const setGmailPreset = () => {
+    setHost('smtp.gmail.com');
+    setPort(465);
+    showToast('Loaded Gmail SMTP settings (Port 465 SSL)', 'info');
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -73,7 +79,19 @@ export const SettingsPage = () => {
       </div>
 
       {/* SMTP Form */}
-      <Card title="Email Delivery Credentials" subtitle="Supports Gmail, Outlook, Amazon SES, or custom SMTP">
+      <Card
+        title="Email Delivery Credentials"
+        subtitle="Supports Gmail, Outlook, Amazon SES, or custom SMTP"
+        action={
+          <button
+            type="button"
+            onClick={setGmailPreset}
+            className="px-3 py-1 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition"
+          >
+            Use Gmail Defaults (Port 465)
+          </button>
+        }
+      >
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">

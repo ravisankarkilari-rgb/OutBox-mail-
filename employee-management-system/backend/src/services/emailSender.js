@@ -2,12 +2,12 @@ const net = require('net');
 const tls = require('tls');
 
 /**
- * Pure Node.js SMTP client for sending emails without external dependencies.
- * Supports TLS / STARTTLS authentication with Gmail, Outlook, or custom SMTP servers.
+ * Pure Node.js SMTP client for sending live emails to real inboxes.
+ * Supports TLS / SSL direct authentication (Port 465 for Gmail, Yahoo, custom SMTP).
  */
 class EmailSender {
   async send({ to, subject, body, smtpConfig = null }) {
-    // If SMTP credentials are provided, attempt real SMTP delivery
+    // Check if SMTP credentials are provided
     const host = smtpConfig?.host || process.env.SMTP_HOST;
     const port = smtpConfig?.port || parseInt(process.env.SMTP_PORT || '465', 10);
     const user = smtpConfig?.userEmail || process.env.SMTP_USER;
@@ -18,26 +18,28 @@ class EmailSender {
 
     if (host && user && pass) {
       try {
+        console.log(`🌐 Transmitting live email via SMTP (${host}:${port}) to: ${to}...`);
         await this.sendViaSmtp({ host, port, user, pass, from, to, subject, body });
-        return { success: true, mode: 'SMTP', deliveredAt: new Date() };
+        console.log(`✅ Live email delivered via SMTP to ${to}!`);
+        return { success: true, mode: 'LIVE_SMTP', deliveredAt: new Date() };
       } catch (err) {
-        console.error('SMTP transmission failed:', err.message);
+        console.error('❌ SMTP transmission failed:', err.message);
         throw new Error(`SMTP Error: ${err.message}`);
       }
     }
 
-    // Fallback: Simulation / Test Mode (logs email transmission cleanly)
-    console.log(`\n📨 [SIMULATED EMAIL DISPATCH]`);
+    // Fallback: Simulation Mode when no SMTP credentials have been entered yet
+    console.log(`\n⚠️  [SIMULATION MODE - NO SMTP CREDENTIALS ENTERED]`);
+    console.log(`   To send actual live emails to inboxes, enter your Gmail address and App Password in "SMTP Settings".`);
     console.log(`   To: ${to}`);
     console.log(`   Subject: ${subject}`);
-    console.log(`   Sent At: ${new Date().toISOString()}`);
-    console.log(`   Body Preview: ${body.substring(0, 100)}...`);
-    console.log(`   Status: Successfully Delivered (Simulator)\n`);
+    console.log(`   Delivered At: ${new Date().toISOString()}`);
+    console.log(`   Preview: ${body.substring(0, 100)}...\n`);
 
     return {
       success: true,
       mode: 'SIMULATION',
-      note: 'Delivered via built-in Outbox simulator. Configure your SMTP settings in Settings to send live emails.',
+      note: 'Simulated delivery. Configure your SMTP Settings in the app to send live emails to inboxes.',
       deliveredAt: new Date(),
     };
   }
@@ -50,11 +52,11 @@ class EmailSender {
         : net.connect({ host, port });
 
       let step = 0;
-      let buffer = '';
+      let pendingRecipients = [];
 
-      socket.setTimeout(20000, () => {
+      socket.setTimeout(25000, () => {
         socket.destroy();
-        reject(new Error('SMTP Connection timed out'));
+        reject(new Error('SMTP connection timed out after 25s'));
       });
 
       const write = (cmd) => {
@@ -63,14 +65,11 @@ class EmailSender {
 
       socket.on('data', (data) => {
         const response = data.toString();
-        buffer += response;
-
-        // Parse SMTP reply code
         const code = parseInt(response.substring(0, 3), 10);
 
         if (code >= 400) {
           socket.destroy();
-          return reject(new Error(`SMTP server rejected with code ${code}: ${response}`));
+          return reject(new Error(`SMTP server responded with error ${code}: ${response.trim()}`));
         }
 
         if (step === 0 && code === 220) {
@@ -84,19 +83,18 @@ class EmailSender {
           write(Buffer.from(user).toString('base64'));
         } else if (step === 3 && code === 334) {
           step = 4;
-          write(Buffer.from(pass).toString('base64'));
+          write(Buffer.from(pass.replace(/\s+/g, '')).toString('base64')); // Strip whitespace from App Passwords
         } else if (step === 4 && code === 235) {
           step = 5;
           write(`MAIL FROM:<${user}>`);
         } else if (step === 5 && code === 250) {
           step = 6;
-          // Handle multiple recipients
-          const recipientsList = to.split(',').map((r) => r.trim());
-          this.pendingRecipients = recipientsList.slice(1);
+          const recipientsList = to.split(',').map((r) => r.trim()).filter((r) => r.length > 0);
+          pendingRecipients = recipientsList.slice(1);
           write(`RCPT TO:<${recipientsList[0]}>`);
         } else if (step === 6 && code === 250) {
-          if (this.pendingRecipients && this.pendingRecipients.length > 0) {
-            const nextRcpt = this.pendingRecipients.shift();
+          if (pendingRecipients && pendingRecipients.length > 0) {
+            const nextRcpt = pendingRecipients.shift();
             write(`RCPT TO:<${nextRcpt}>`);
           } else {
             step = 7;
@@ -104,14 +102,18 @@ class EmailSender {
           }
         } else if (step === 7 && code === 354) {
           step = 8;
+          // Format HTML with line breaks if plain text
+          const formattedBody = body.includes('<') ? body : body.replace(/\n/g, '<br/>');
+
           const emailMessage = [
             `From: ${from}`,
             `To: ${to}`,
             `Subject: ${subject}`,
+            `Date: ${new Date().toUTCString()}`,
             `MIME-Version: 1.0`,
             `Content-Type: text/html; charset=utf-8`,
             ``,
-            body,
+            formattedBody,
             `.`,
           ].join('\r\n');
           write(emailMessage);
@@ -131,4 +133,3 @@ class EmailSender {
 }
 
 module.exports = new EmailSender();
-
