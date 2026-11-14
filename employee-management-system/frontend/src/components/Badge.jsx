@@ -51,3 +51,4 @@ export const RatingBadge = ({ rating }) => {
       return <Badge variant="gray">{rating}</Badge>;
   }
 };
+

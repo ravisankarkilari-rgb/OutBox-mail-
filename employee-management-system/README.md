@@ -278,3 +278,4 @@ All 36 unit tests cover:
 - **Database connection error**: Verify that PostgreSQL is running on port 5432 and the `DATABASE_URL` credentials in `backend/.env` match your PostgreSQL password.
 - **Port 5000 in use**: You can customize `PORT=5001` in `backend/.env` and update the proxy in `frontend/vite.config.js`.
 - **CORS Error**: Ensure `FRONTEND_URL="http://localhost:5173"` in `backend/.env`.
+

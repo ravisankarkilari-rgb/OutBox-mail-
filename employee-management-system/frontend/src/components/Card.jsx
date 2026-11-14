@@ -45,3 +45,4 @@ export const StatCard = ({ title, value, icon: Icon, color = 'sky', trend }) => 
     </div>
   );
 };
+

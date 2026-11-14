@@ -20,3 +20,4 @@ export const Table = ({ headers = [], children, emptyMessage = 'No records found
     </div>
   );
 };
+

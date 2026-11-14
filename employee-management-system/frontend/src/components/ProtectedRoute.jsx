@@ -24,3 +24,4 @@ export const ProtectedRoute = ({ allowedRoles = [] }) => {
 
   return <Outlet />;
 };
+

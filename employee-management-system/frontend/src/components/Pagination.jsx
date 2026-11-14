@@ -37,3 +37,4 @@ export const Pagination = ({ pagination, onPageChange }) => {
     </div>
   );
 };
+
