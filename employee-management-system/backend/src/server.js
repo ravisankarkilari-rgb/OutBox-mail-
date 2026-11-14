@@ -1,4 +1,11 @@
 require('dotenv').config();
+const dns = require('dns');
+
+// Force IPv4 first to prevent Windows getaddrinfo ENOENT bug
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch (e) {}
+
 const app = require('./app');
 const { connectDB } = require('./config/database');
 const { port } = require('./config/constants');
