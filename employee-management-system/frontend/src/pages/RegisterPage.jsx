@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
 export const RegisterPage = () => {
   const [email, setEmail] = useState('');
@@ -47,6 +48,19 @@ export const RegisterPage = () => {
           </div>
           <h2 className="text-2xl font-bold text-slate-800">Create Account</h2>
           <p className="text-sm text-slate-500 mt-1">Start scheduling and automating your outbound emails</p>
+        </div>
+
+        {/* Sign in / Sign up with Google */}
+        <div className="mb-5">
+          <GoogleSignInButton text="Sign up with Google" />
+        </div>
+
+        <div className="relative flex items-center justify-center mb-5">
+          <div className="border-t border-slate-200 w-full" />
+          <span className="bg-white px-3 text-xs uppercase text-slate-400 font-semibold tracking-wider">
+            Or register with email
+          </span>
+          <div className="border-t border-slate-200 w-full" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

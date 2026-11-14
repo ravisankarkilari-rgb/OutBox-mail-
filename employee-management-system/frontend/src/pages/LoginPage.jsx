@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -46,6 +47,19 @@ export const LoginPage = () => {
           </div>
           <h2 className="text-2xl font-bold text-slate-800">Outbox Mail</h2>
           <p className="text-sm text-slate-500 mt-1">Automated Scheduled Email Dispatcher</p>
+        </div>
+
+        {/* Sign in with Google */}
+        <div className="mb-5">
+          <GoogleSignInButton text="Sign in with Google" />
+        </div>
+
+        <div className="relative flex items-center justify-center mb-5">
+          <div className="border-t border-slate-200 w-full" />
+          <span className="bg-white px-3 text-xs uppercase text-slate-400 font-semibold tracking-wider">
+            Or with email
+          </span>
+          <div className="border-t border-slate-200 w-full" />
         </div>
 
         {/* Demo Fast Login */}

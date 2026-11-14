@@ -44,7 +44,20 @@ export const AuthProvider = ({ children }) => {
     throw new Error(res.data?.message || 'Login failed');
   };
 
-  const register = async (email, password, role = 'EMPLOYEE') => {
+  const loginWithGoogle = async (credential, demoUser = null) => {
+    const res = await api.post('/auth/google', { credential, demoUser });
+    if (res.data?.success) {
+      const { user: userData, accessToken } = res.data.data;
+      setUser(userData);
+      setToken(accessToken);
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      return userData;
+    }
+    throw new Error(res.data?.message || 'Google sign-in failed');
+  };
+
+  const register = async (email, password, role = 'USER') => {
     const res = await api.post('/auth/register', { email, password, role });
     return res.data;
   };
@@ -78,6 +91,7 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         isEmployee,
         login,
+        loginWithGoogle,
         register,
         logout,
         updateUserState,

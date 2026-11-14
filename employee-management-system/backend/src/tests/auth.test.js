@@ -103,4 +103,33 @@ describe('AuthService', () => {
       await expect(authService.getMe('bad-id')).rejects.toMatchObject({ statusCode: 404 });
     });
   });
+
+  describe('googleAuth()', () => {
+    it('should sign in or create user using demo/verified user data', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({
+        id: 'google-user-1',
+        email: 'ravisankarkilari@gmail.com',
+        name: 'Ravisankar Kilari',
+        role: 'USER',
+        password: 'hashedpassword',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await authService.googleAuth(null, {
+        email: 'ravisankarkilari@gmail.com',
+        name: 'Ravisankar Kilari',
+      });
+
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+      expect(result.user.email).toBe('ravisankarkilari@gmail.com');
+      expect(result.user.password).toBeUndefined();
+    });
+
+    it('should throw 400 when no email is provided', async () => {
+      await expect(authService.googleAuth(null, {})).rejects.toMatchObject({ statusCode: 400 });
+    });
+  });
 });

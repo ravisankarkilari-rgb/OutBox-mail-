@@ -5,7 +5,7 @@ const registerValidator = [
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['ADMIN', 'EMPLOYEE']).withMessage('Invalid role'),
+  body('role').optional().isIn(['ADMIN', 'EMPLOYEE', 'USER']).withMessage('Invalid role'),
 ];
 
 const loginValidator = [

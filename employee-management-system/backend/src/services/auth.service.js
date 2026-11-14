@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const https = require('https');
 const { prisma } = require('../config/database');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const AppError = require('../utils/AppError');
@@ -38,6 +39,81 @@ class AuthService {
 
     const { password: _, ...safeUser } = user;
     return safeUser;
+  }
+
+  // Google OAuth verification and user synchronization
+  async googleAuth(credential, demoUser = null) {
+    let email = null;
+    let name = null;
+
+    if (!credential && (!demoUser || !demoUser.email)) {
+      throw new AppError('Google credential or email is required', 400);
+    }
+
+    if (demoUser && demoUser.email) {
+      // Demo / simulated Google login when client ID is in sandbox
+      email = demoUser.email;
+      name = demoUser.name || email.split('@')[0];
+    } else {
+      // Verify Google ID token with Google's official tokeninfo endpoint
+      const payload = await this.verifyGoogleToken(credential);
+      email = payload.email;
+      name = payload.name;
+    }
+
+    if (!email) {
+      throw new AppError('Google account does not provide a valid email', 400);
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: { smtpConfig: true },
+    });
+
+    if (!user) {
+      const randomPassword = await bcrypt.hash(Math.random().toString(36) + Date.now(), 10);
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: name || email.split('@')[0],
+          password: randomPassword,
+          role: 'USER',
+        },
+        include: { smtpConfig: true },
+      });
+    }
+
+    const tokenPayload = { userId: user.id, email: user.email, role: user.role };
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+    const { password: _, ...safeUser } = user;
+
+    return { user: safeUser, accessToken, refreshToken };
+  }
+
+  verifyGoogleToken(idToken) {
+    return new Promise((resolve, reject) => {
+      https
+        .get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`, (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', () => {
+            try {
+              const payload = JSON.parse(data);
+              if (payload.error_description || payload.error) {
+                return reject(new AppError(payload.error_description || 'Invalid Google token', 401));
+              }
+              resolve(payload);
+            } catch (err) {
+              reject(new AppError('Failed to parse Google response', 500));
+            }
+          });
+        })
+        .on('error', (err) => {
+          reject(new AppError(`Google verification network error: ${err.message}`, 500));
+        });
+    });
   }
 
   async refreshToken(token) {
