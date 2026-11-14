@@ -15,3 +15,4 @@ router.delete('/:id', ctrl.deleteEmail);
 router.post('/smtp-config', ctrl.saveSmtp);
 
 module.exports = router;
+

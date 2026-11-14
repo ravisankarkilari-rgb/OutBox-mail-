@@ -1,21 +1,19 @@
 {
-  "name": "ems-backend",
+  "name": "outbox-mail-backend",
   "version": "1.0.0",
-  "description": "Production-grade Employee Management System Backend",
+  "description": "Production-grade Outbox Mail Automated Scheduled Email Dispatcher Backend",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.js",
-    "db:sqlite": "node switch-db.js sqlite",
-    "db:postgres": "node switch-db.js postgres",
     "test": "jest --runInBand --forceExit"
   },
   "keywords": [
-    "employee-management",
+    "email-scheduler",
+    "outbox-mail",
     "express",
     "prisma",
     "jwt",
