@@ -1,39 +1,19 @@
-// Prisma Schema for Employee Management System
+// Prisma Schema for SQLite (Zero-Setup Development Mode)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  EMPLOYEE
-}
-
-enum EmploymentStatus {
-  ACTIVE
-  INACTIVE
-  ON_LEAVE
-  TERMINATED
-}
-
-enum PerformanceRating {
-  EXCELLENT
-  GOOD
-  AVERAGE
-  BELOW_AVERAGE
-  POOR
 }
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
-  role      Role     @default(EMPLOYEE)
+  role      String   @default("EMPLOYEE")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -58,28 +38,28 @@ model Department {
 }
 
 model Employee {
-  id               String           @id @default(cuid())
-  employeeId       String           @unique
-  firstName        String
-  lastName         String
-  email            String           @unique
-  phone            String?
-  designation      String
-  joiningDate      DateTime
-  salary           Decimal          @db.Decimal(12, 2)
-  status           EmploymentStatus @default(ACTIVE)
-  profileImage     String?
-  address          String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  id           String   @id @default(cuid())
+  employeeId   String   @unique
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  designation  String
+  joiningDate  DateTime
+  salary       Float
+  status       String   @default("ACTIVE")
+  profileImage String?
+  address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  userId           String           @unique
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  departmentId     String
-  department       Department       @relation(fields: [departmentId], references: [id])
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
 
-  evaluations      PerformanceEvaluation[]
+  evaluations  PerformanceEvaluation[]
 
   @@index([employeeId])
   @@index([departmentId])
@@ -89,22 +69,21 @@ model Employee {
 }
 
 model PerformanceEvaluation {
-  id             String            @id @default(cuid())
+  id             String   @id @default(cuid())
   evaluationDate DateTime
-  rating         PerformanceRating
-  score          Int               @default(0) // 0-100
+  rating         String   @default("GOOD")
+  score          Int      @default(0)
   comments       String?
   goals          String?
   achievements   String?
   evaluatorName  String
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   employeeId     String
-  employee       Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@index([evaluationDate])
   @@map("performance_evaluations")
 }
-

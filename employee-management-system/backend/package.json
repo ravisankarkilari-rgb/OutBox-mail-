@@ -10,6 +10,8 @@
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.js",
+    "db:sqlite": "node switch-db.js sqlite",
+    "db:postgres": "node switch-db.js postgres",
     "test": "jest --runInBand --forceExit"
   },
   "keywords": [

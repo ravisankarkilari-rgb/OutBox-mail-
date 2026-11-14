@@ -11,7 +11,6 @@ class DashboardService {
       recentEmployees,
       departmentStats,
       statusDistribution,
-      monthlyJoining,
     ] = await Promise.all([
       prisma.employee.count(),
       prisma.employee.count({ where: { status: 'ACTIVE' } }),
@@ -31,8 +30,12 @@ class DashboardService {
         by: ['status'],
         _count: { status: true },
       }),
-      // Monthly joining for last 6 months
-      prisma.$queryRaw`
+    ]);
+
+    // Monthly joining calculation (with cross-DB JS fallback)
+    let monthlyJoining = [];
+    try {
+      monthlyJoining = await prisma.$queryRaw`
         SELECT
           TO_CHAR("joiningDate", 'Mon YYYY') as month,
           DATE_TRUNC('month', "joiningDate") as month_start,
@@ -41,8 +44,22 @@ class DashboardService {
         WHERE "joiningDate" >= NOW() - INTERVAL '6 months'
         GROUP BY month, month_start
         ORDER BY month_start ASC
-      `,
-    ]);
+      `;
+    } catch {
+      // Cross-platform JS aggregation
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const hires = await prisma.employee.findMany({
+        where: { joiningDate: { gte: sixMonthsAgo } },
+        select: { joiningDate: true },
+      });
+      const counts = {};
+      hires.forEach((h) => {
+        const key = new Date(h.joiningDate).toLocaleDateString('default', { month: 'short', year: 'numeric' });
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      monthlyJoining = Object.entries(counts).map(([month, count]) => ({ month, count }));
+    }
 
     return {
       summary: {
@@ -67,4 +84,3 @@ class DashboardService {
 }
 
 module.exports = new DashboardService();
-
