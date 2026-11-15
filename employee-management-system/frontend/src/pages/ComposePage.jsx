@@ -213,7 +213,27 @@ export const ComposePage = () => {
         payload.attachments = attachments;
       }
 
-      await api.post('/emails/schedule', payload);
+      const res = await api.post('/emails/schedule', payload);
+      const createdItem = res.data?.data;
+
+      // Save to local persistent outbox cache so history is permanently kept
+      try {
+        const cacheKey = `outbox_history_${user?.email || 'default'}`;
+        const existingRaw = localStorage.getItem(cacheKey);
+        const existing = existingRaw ? JSON.parse(existingRaw) : [];
+        const newItem = createdItem || {
+          id: Math.random().toString(36).substring(2, 9),
+          subject,
+          body,
+          recipients: targetRecipients,
+          recipientCount: detectedEmails.length,
+          scheduledAt: new Date(scheduledAt).toISOString(),
+          status: 'SCHEDULED',
+          createdAt: new Date().toISOString(),
+        };
+        const updated = [newItem, ...existing.filter((e) => e.id !== newItem.id)].slice(0, 100);
+        localStorage.setItem(cacheKey, JSON.stringify(updated));
+      } catch (_) {}
 
       showToast(
         `Email successfully scheduled for ${detectedEmails.length} recipient(s)${
