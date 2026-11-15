@@ -16,7 +16,7 @@ const errorHandler = (err, req, res, next) => {
   }
 
   const statusCode = err.statusCode || 500;
-  const message = err.isOperational ? err.message : 'Internal Server Error';
+  const message = err.message || 'Internal Server Error';
   return sendError(res, message, statusCode);
 };
 
