@@ -23,18 +23,20 @@ export const GoogleConnectModal = () => {
     if (clientId && window.google?.accounts?.oauth2) {
       setLoading(true);
       try {
-        const codeClient = window.google.accounts.oauth2.initCodeClient({
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
-          ux_mode: 'popup',
-          callback: async (codeResponse) => {
-            if (codeResponse.error) {
-              showToast(codeResponse.error_description || 'Authorization was cancelled', 'error');
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              showToast(tokenResponse.error_description || tokenResponse.error || 'Authorization was cancelled', 'error');
               setLoading(false);
               return;
             }
             try {
-              await api.post('/auth/google/connect', { code: codeResponse.code });
+              await api.post('/auth/google/connect', {
+                accessToken: tokenResponse.access_token,
+                expiresIn: tokenResponse.expires_in,
+              });
               showToast('Google account connected! Direct Gmail dispatch active (0 passwords).', 'success');
               const meRes = await api.get('/auth/me');
               if (meRes.data?.data) updateUserState(meRes.data.data);
@@ -45,7 +47,7 @@ export const GoogleConnectModal = () => {
             }
           },
         });
-        codeClient.requestCode();
+        tokenClient.requestAccessToken({ prompt: 'consent' });
         return;
       } catch (err) {
         setLoading(false);

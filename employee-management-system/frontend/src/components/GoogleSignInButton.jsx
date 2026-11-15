@@ -17,31 +17,33 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
   const handleGoogleOAuthClick = () => {
     if (clientId && window.google?.accounts?.oauth2) {
       try {
-        const codeClient = window.google.accounts.oauth2.initCodeClient({
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
-          ux_mode: 'popup',
-          callback: async (codeResponse) => {
-            if (codeResponse.error) {
-              showToast(codeResponse.error_description || 'Google authorization cancelled', 'error');
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              showToast(tokenResponse.error_description || tokenResponse.error || 'Google authorization cancelled', 'error');
               return;
             }
             setLoading(true);
             try {
-              await loginWithGoogle(null, null, { code: codeResponse.code });
+              await loginWithGoogle(null, null, {
+                accessToken: tokenResponse.access_token,
+                expiresIn: tokenResponse.expires_in,
+              });
               showToast('Signed in with Google! Direct Gmail API dispatch enabled (0 passwords).', 'success');
               navigate('/dashboard');
             } catch (err) {
-              showToast(err.message || 'Google OAuth failed', 'error');
+              showToast(err.response?.data?.message || err.message || 'Google OAuth failed', 'error');
             } finally {
               setLoading(false);
             }
           },
         });
-        codeClient.requestCode();
+        tokenClient.requestAccessToken({ prompt: 'consent' });
         return;
       } catch (err) {
-        console.warn('OAuth code client failed, trying token client:', err);
+        console.warn('OAuth token client failed:', err);
       }
     }
     setShowPrompt(true);
