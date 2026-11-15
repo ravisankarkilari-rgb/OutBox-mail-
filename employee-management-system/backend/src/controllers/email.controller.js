@@ -81,7 +81,7 @@ const getEmails = async (req, res, next) => {
       await schedulerService.processPendingEmails();
     } catch (_) {}
 
-    const { emails, pagination } = await schedulerService.getEmails(req.user.id, req.query);
+    const { emails, pagination } = await schedulerService.getEmails(req.user.id, req.query, req.user?.email);
     return sendPaginated(res, emails, pagination, 'Emails fetched');
   } catch (err) {
     next(err);

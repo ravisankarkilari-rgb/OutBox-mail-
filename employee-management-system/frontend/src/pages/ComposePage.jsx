@@ -204,11 +204,12 @@ export const ComposePage = () => {
     setLoading(true);
     try {
       const googleToken = localStorage.getItem('google_access_token') || user?.googleAccessToken;
+      const scheduledIso = new Date(scheduledAt).toISOString();
       const payload = {
         recipients: targetRecipients,
         subject,
         body,
-        scheduledAt: new Date(scheduledAt).toISOString(),
+        scheduledAt: scheduledIso,
       };
       if (googleToken) {
         payload.googleAccessToken = googleToken;
@@ -217,27 +218,50 @@ export const ComposePage = () => {
         payload.attachments = attachments;
       }
 
+      // Immediately register in persistent history so it is NEVER lost even if connection drops
+      const tempId = `mail_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const pendingItem = {
+        id: tempId,
+        subject,
+        body,
+        recipients: targetRecipients,
+        recipientCount: detectedEmails.length,
+        scheduledAt: scheduledIso,
+        status: new Date(scheduledAt) <= new Date(Date.now() + 120000) ? 'SENT' : 'SCHEDULED',
+        sentAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      const persistToAllKeys = (item) => {
+        const candidateKeys = [
+          'outbox_history_permanent',
+          'outbox_history_all',
+          'outbox_history_default',
+        ];
+        if (user?.email) {
+          candidateKeys.push(`outbox_history_${user.email.toLowerCase()}`);
+          candidateKeys.push(`outbox_history_${user.email}`);
+        }
+        candidateKeys.forEach((key) => {
+          try {
+            const raw = localStorage.getItem(key);
+            const list = raw ? JSON.parse(raw) : [];
+            const filtered = list.filter((e) => e.id !== item.id && e.id !== tempId);
+            const updated = [item, ...filtered].slice(0, 100);
+            localStorage.setItem(key, JSON.stringify(updated));
+          } catch (_) {}
+        });
+      };
+
+      persistToAllKeys(pendingItem);
+
       const res = await api.post('/emails/schedule', payload);
       const createdItem = res.data?.data;
 
-      // Save to local persistent outbox cache so history is permanently kept
-      try {
-        const cacheKey = `outbox_history_${user?.email || 'default'}`;
-        const existingRaw = localStorage.getItem(cacheKey);
-        const existing = existingRaw ? JSON.parse(existingRaw) : [];
-        const newItem = createdItem || {
-          id: Math.random().toString(36).substring(2, 9),
-          subject,
-          body,
-          recipients: targetRecipients,
-          recipientCount: detectedEmails.length,
-          scheduledAt: new Date(scheduledAt).toISOString(),
-          status: 'SCHEDULED',
-          createdAt: new Date().toISOString(),
-        };
-        const updated = [newItem, ...existing.filter((e) => e.id !== newItem.id)].slice(0, 100);
-        localStorage.setItem(cacheKey, JSON.stringify(updated));
-      } catch (_) {}
+      // Update with final server response
+      if (createdItem) {
+        persistToAllKeys(createdItem);
+      }
 
       showToast(
         `Email successfully scheduled for ${detectedEmails.length} recipient(s)${

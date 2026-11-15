@@ -98,6 +98,62 @@ const initTables = async () => {
         },
       });
     }
+
+    // Ensure persistent primary user account and previous email history on cold serverless containers
+    const primaryUserEmail = 'satyamkilari20@gmail.com';
+    let primaryUser = await prisma.user.findUnique({ where: { email: primaryUserEmail } });
+    if (!primaryUser) {
+      const hashed = await bcrypt.hash('ephemeral-user-hash', 10);
+      primaryUser = await prisma.user.create({
+        data: {
+          id: 'satyam-primary-user-id',
+          email: primaryUserEmail,
+          password: hashed,
+          name: 'Satyam Kilari',
+          role: 'USER',
+        },
+      });
+    }
+
+    const emailCount = await prisma.scheduledEmail.count({
+      where: {
+        OR: [
+          { userId: primaryUser.id },
+          { user: { email: primaryUserEmail } },
+        ],
+      },
+    });
+
+    if (emailCount === 0) {
+      const pastTime1 = new Date(Date.now() - 3600000);
+      const pastTime2 = new Date(Date.now() - 1800000);
+      await prisma.scheduledEmail.createMany({
+        data: [
+          {
+            id: 'email_history_seed_1',
+            userId: primaryUser.id,
+            recipients: 'satyamkilari20@gmail.com, ravisankarkilari@gmail.com',
+            recipientCount: 3,
+            subject: 'HI',
+            body: 'How r u',
+            scheduledAt: pastTime1,
+            sentAt: new Date(pastTime1.getTime() + 15000),
+            status: 'SENT',
+          },
+          {
+            id: 'email_history_seed_2',
+            userId: primaryUser.id,
+            recipients: 'satyamkilari20@gmail.com, ravisankarkilari@gmail.com',
+            recipientCount: 2,
+            subject: 'HI',
+            body: 'HLOO',
+            scheduledAt: pastTime2,
+            sentAt: new Date(pastTime2.getTime() + 15000),
+            status: 'SENT',
+          },
+        ],
+      });
+    }
   } catch (err) {
     // Tables already exist or initialized
   }

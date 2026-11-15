@@ -175,20 +175,32 @@ class SchedulerService {
   }
 
   // Get user's emails with filtering (SCHEDULED, SENT, FAILED, ALL)
-  async getEmails(userId, { status, search, page = 1, limit = 10 }) {
+  async getEmails(userId, { status, search, page = 1, limit = 10 }, userEmail = null) {
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
     const skip = (pageNum - 1) * limitNum;
 
-    const where = { userId };
+    const userFilters = [{ userId }];
+    if (userEmail) {
+      userFilters.push({ user: { email: userEmail } });
+    }
+
+    const where = {
+      OR: userFilters,
+    };
+
     if (status && status !== 'ALL') {
       where.status = status;
     }
     if (search) {
-      where.OR = [
-        { subject: { contains: search } },
-        { recipients: { contains: search } },
-        { body: { contains: search } },
+      where.AND = [
+        {
+          OR: [
+            { subject: { contains: search } },
+            { recipients: { contains: search } },
+            { body: { contains: search } },
+          ],
+        },
       ];
     }
 
