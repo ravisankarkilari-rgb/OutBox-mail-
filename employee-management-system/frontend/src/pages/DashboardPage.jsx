@@ -151,13 +151,10 @@ export const DashboardPage = () => {
       localHistory.forEach((e) => mergedMap.set(e.id, e));
       fetched.forEach((e) => mergedMap.set(e.id, e));
 
-      const fullMerged = Array.from(mergedMap.values()).sort(
-        (a, b) => new Date(b.scheduledAt || b.createdAt) - new Date(a.scheduledAt || a.createdAt)
-      );
+      persistHistory(Array.from(mergedMap.values()), user?.email);
+      const cleanList = getSavedHistory(user?.email);
 
-      persistHistory(fullMerged, user?.email);
-
-      const filtered = status === 'ALL' ? fullMerged : fullMerged.filter((e) => e.status === status);
+      const filtered = status === 'ALL' ? cleanList : cleanList.filter((e) => e.status === status);
       setFeatureEmails(filtered);
     } catch (err) {
       if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') return;

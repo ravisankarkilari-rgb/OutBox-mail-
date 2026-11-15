@@ -54,17 +54,14 @@ export const OutboxPage = () => {
         // Overwrite/update with latest fresh items from server
         fetchedEmails.forEach((e) => mergedMap.set(e.id, e));
 
-        const fullMerged = Array.from(mergedMap.values()).sort(
-          (a, b) => new Date(b.scheduledAt || b.createdAt) - new Date(a.scheduledAt || a.createdAt)
-        );
-
-        persistHistory(fullMerged, user?.email);
+        persistHistory(Array.from(mergedMap.values()), user?.email);
+        const cleanList = getSavedHistory(user?.email);
 
         // Filter based on active tab
         if (tab === 'ALL') {
-          setEmails(fullMerged);
+          setEmails(cleanList);
         } else {
-          setEmails(fullMerged.filter((e) => e.status === tab));
+          setEmails(cleanList.filter((e) => e.status === tab));
         }
       }
     } catch (err) {

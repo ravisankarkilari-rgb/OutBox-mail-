@@ -223,10 +223,9 @@ export const ComposePage = () => {
       const scheduledTime = new Date(scheduledAt).getTime();
       const isLiveNow = scheduledTime <= Date.now() + 5000;
 
-      // Immediately register in persistent history so it is NEVER lost even if connection drops
-      const tempId = `mail_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const pendingItem = {
-        id: tempId,
+      const res = await api.post('/emails/schedule', payload);
+      const createdItem = res.data?.data || {
+        id: `mail_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         subject,
         body,
         recipients: targetRecipients,
@@ -237,15 +236,8 @@ export const ComposePage = () => {
         createdAt: new Date().toISOString(),
       };
 
-      saveEmailToHistory(pendingItem, user?.email);
-
-      const res = await api.post('/emails/schedule', payload);
-      const createdItem = res.data?.data;
-
-      // Update with final server response
-      if (createdItem) {
-        saveEmailToHistory(createdItem, user?.email);
-      }
+      // Register precisely once in persistent history
+      saveEmailToHistory(createdItem, user?.email);
 
       showToast(
         `Email successfully scheduled for ${detectedEmails.length} recipient(s)${
