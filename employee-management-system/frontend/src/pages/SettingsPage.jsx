@@ -6,15 +6,54 @@ import { useAuth } from '../context/AuthContext';
 import { Settings, Save, ShieldCheck, Mail, Info, Key, Server, CheckCircle } from 'lucide-react';
 
 export const SettingsPage = () => {
-  const { user } = useAuth();
+  const { user, connectGoogle } = useAuth();
   const [host, setHost] = useState('smtp.gmail.com');
   const [port, setPort] = useState(465);
   const [userEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fromName, setFromName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [connectingGoogle, setConnectingGoogle] = useState(false);
 
   const { showToast } = useToast();
+
+  const GOOGLE_CLIENT_ID_DEFAULT = '896070974157-k5hkgaavkpc7d48thlum85cr4rlv4ujg.apps.googleusercontent.com';
+  const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_DEFAULT).replace(/['"]/g, '').trim();
+
+  const handleConnectGmail = () => {
+    if (clientId && window.google?.accounts?.oauth2) {
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              showToast(tokenResponse.error_description || tokenResponse.error || 'Google authorization cancelled', 'error');
+              return;
+            }
+            setConnectingGoogle(true);
+            try {
+              await connectGoogle({
+                accessToken: tokenResponse.access_token,
+                expiresIn: tokenResponse.expires_in,
+              });
+              showToast(`Connected! Emails will now send directly from your personal Gmail (${user?.email}) with zero passwords.`, 'success');
+            } catch (err) {
+              showToast(err.response?.data?.message || err.message || 'Failed to connect Google account', 'error');
+            } finally {
+              setConnectingGoogle(false);
+            }
+          },
+        });
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+        return;
+      } catch (err) {
+        showToast('Google OAuth error: ' + err.message, 'error');
+      }
+    } else {
+      showToast('Google OAuth service is still loading. Please try again in a few seconds.', 'error');
+    }
+  };
 
   useEffect(() => {
     if (user?.smtpConfig) {
@@ -76,6 +115,33 @@ export const SettingsPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Direct Gmail API (Zero Passwords) Card */}
+      <Card
+        title="Direct Gmail Dispatch (0 Passwords)"
+        subtitle="Authorize Outbox Mail to send emails directly from your personal Gmail address"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-slate-800">
+              Logged in as: <span className="text-sky-600 font-bold">{user?.email}</span>
+            </p>
+            <p className="text-xs text-slate-500">
+              {user?.googleAccessToken
+                ? '✅ Direct Gmail sending is active for your account (0 passwords required).'
+                : 'Connect with Google to send all outbox emails directly from your personal email without entering passwords.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleConnectGmail}
+            disabled={connectingGoogle}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-xl transition shadow-sm disabled:opacity-50 whitespace-nowrap"
+          >
+            {connectingGoogle ? 'Connecting...' : user?.googleAccessToken ? 'Re-authorize Gmail Access' : 'Authorize Gmail (0 Passwords)'}
+          </button>
+        </div>
+      </Card>
 
       {/* SMTP Form */}
       <Card

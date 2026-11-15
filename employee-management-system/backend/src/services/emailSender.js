@@ -24,10 +24,12 @@ class EmailSender {
     const smtpAuthUser = smtpConfig?.userEmail || process.env.SMTP_USER || DEFAULT_SMTP_USER;
     const smtpAuthPass = smtpConfig?.password || process.env.SMTP_PASS || DEFAULT_SMTP_PASS;
 
-    // Sender display name defaults to user's name or Outbox Mail
-    const senderName = smtpConfig?.fromName || userName || 'Outbox Mail';
+    // Sender display name clearly identifies the sender
+    const senderName = smtpConfig?.fromName || userName || userEmail?.split('@')[0] || 'Outbox Mail';
     const relayEmail = smtpConfig?.userEmail || smtpAuthUser;
-    const from = `"${senderName}" <${relayEmail}>`;
+    const from = userEmail && userEmail !== relayEmail
+      ? `"${senderName} via Outbox" <${relayEmail}>`
+      : `"${senderName}" <${relayEmail}>`;
     // Reply-To routes directly back to the authenticated user's registered login email
     const replyTo = userEmail || relayEmail;
 
