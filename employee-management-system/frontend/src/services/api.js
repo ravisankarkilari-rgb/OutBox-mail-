@@ -14,12 +14,21 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor: attach Bearer token
+// Request interceptor: attach Bearer token and Google Access Token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const userRaw = localStorage.getItem('user');
+    if (userRaw) {
+      try {
+        const u = JSON.parse(userRaw);
+        if (u.googleAccessToken) {
+          config.headers['x-google-access-token'] = u.googleAccessToken;
+        }
+      } catch (_) {}
     }
     return config;
   },

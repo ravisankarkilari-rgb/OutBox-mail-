@@ -41,25 +41,31 @@ export const DashboardPage = () => {
   const [connectingGmail, setConnectingGmail] = useState(false);
 
   const handleConnectGmail = () => {
-    const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').replace(/['"]/g, '').trim();
+    const GOOGLE_CLIENT_ID_DEFAULT = '896070974157-k5hkgaavkpc7d48thlum85cr4rlv4ujg.apps.googleusercontent.com';
+    const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_DEFAULT).replace(/['"]/g, '').trim();
     if (clientId && window.google?.accounts?.oauth2) {
       setConnectingGmail(true);
       try {
-        const codeClient = window.google.accounts.oauth2.initCodeClient({
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
-          ux_mode: 'popup',
-          callback: async (codeResponse) => {
-            if (codeResponse.error) {
-              showToast(codeResponse.error_description || 'Google authorization cancelled', 'error');
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              showToast(tokenResponse.error_description || tokenResponse.error || 'Google authorization cancelled', 'error');
               setConnectingGmail(false);
               return;
             }
             try {
-              await api.post('/auth/google/connect', { code: codeResponse.code });
+              const res = await api.post('/auth/google/connect', {
+                accessToken: tokenResponse.access_token,
+                expiresIn: tokenResponse.expires_in,
+              });
               showToast('Google account connected! Direct Gmail dispatch active (0 passwords).', 'success');
-              const meRes = await api.get('/auth/me');
-              if (meRes.data?.data) updateUserState(meRes.data.data);
+              if (res.data?.data) {
+                updateUserState(res.data.data);
+              } else {
+                updateUserState({ googleAccessToken: tokenResponse.access_token });
+              }
             } catch (err) {
               showToast(err.response?.data?.message || err.message || 'Failed to connect Google account', 'error');
             } finally {
@@ -67,7 +73,7 @@ export const DashboardPage = () => {
             }
           },
         });
-        codeClient.requestCode();
+        tokenClient.requestAccessToken({ prompt: 'consent' });
         return;
       } catch (err) {
         setConnectingGmail(false);

@@ -52,6 +52,17 @@ const authenticate = async (req, res, next) => {
       };
     }
 
+    const googleTokenHeader = req.headers['x-google-access-token'];
+    if (googleTokenHeader) {
+      user.googleAccessToken = googleTokenHeader;
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { googleAccessToken: googleTokenHeader },
+        });
+      } catch (_) {}
+    }
+
     req.user = user;
     next();
   } catch (error) {
