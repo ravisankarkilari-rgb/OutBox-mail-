@@ -16,23 +16,43 @@ const authenticate = async (req, res, next) => {
       return sendError(res, 'Invalid token payload', 401);
     }
 
-    let user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      include: { smtpConfig: true },
-    });
+    let user = null;
+    if (decoded.userId) {
+      try {
+        user = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          include: { smtpConfig: true },
+        });
+      } catch (_) {}
+    }
+
+    if (!user && decoded.email) {
+      try {
+        user = await prisma.user.findUnique({
+          where: { email: decoded.email },
+          include: { smtpConfig: true },
+        });
+      } catch (_) {}
+    }
+
+    const googleTokenHeader = req.headers['x-google-access-token'] || req.body?.googleAccessToken;
 
     if (!user && decoded.email) {
       // On serverless ephemeral instances where /tmp/dev.db is fresh, restore the user session from the verified JWT
       try {
         user = await prisma.user.upsert({
           where: { email: decoded.email },
-          update: { role: decoded.role || 'USER' },
+          update: {
+            role: decoded.role || 'USER',
+            googleAccessToken: googleTokenHeader || undefined,
+          },
           create: {
             id: decoded.userId,
             email: decoded.email,
             password: 'ephemeral-session-hash',
             role: decoded.role || 'USER',
             name: decoded.email.split('@')[0],
+            googleAccessToken: googleTokenHeader || null,
           },
           include: { smtpConfig: true },
         });
@@ -43,17 +63,7 @@ const authenticate = async (req, res, next) => {
       }
     }
 
-    if (!user) {
-      user = {
-        id: decoded.userId,
-        email: decoded.email,
-        role: decoded.role || 'USER',
-        name: decoded.email ? decoded.email.split('@')[0] : 'User',
-      };
-    }
-
-    const googleTokenHeader = req.headers['x-google-access-token'];
-    if (googleTokenHeader) {
+    if (user && googleTokenHeader && user.googleAccessToken !== googleTokenHeader) {
       user.googleAccessToken = googleTokenHeader;
       try {
         await prisma.user.update({
@@ -61,6 +71,16 @@ const authenticate = async (req, res, next) => {
           data: { googleAccessToken: googleTokenHeader },
         });
       } catch (_) {}
+    }
+
+    if (!user) {
+      user = {
+        id: decoded.userId,
+        email: decoded.email,
+        role: decoded.role || 'USER',
+        name: decoded.email ? decoded.email.split('@')[0] : 'User',
+        googleAccessToken: googleTokenHeader || null,
+      };
     }
 
     req.user = user;

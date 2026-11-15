@@ -21,14 +21,19 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    const userRaw = localStorage.getItem('user');
-    if (userRaw) {
-      try {
-        const u = JSON.parse(userRaw);
-        if (u.googleAccessToken) {
-          config.headers['x-google-access-token'] = u.googleAccessToken;
-        }
-      } catch (_) {}
+    const directGoogleToken = localStorage.getItem('google_access_token');
+    let googleToken = directGoogleToken;
+    if (!googleToken) {
+      const userRaw = localStorage.getItem('user');
+      if (userRaw) {
+        try {
+          const u = JSON.parse(userRaw);
+          googleToken = u.googleAccessToken;
+        } catch (_) {}
+      }
+    }
+    if (googleToken) {
+      config.headers['x-google-access-token'] = googleToken;
     }
     return config;
   },

@@ -4,7 +4,7 @@ const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
 
 const scheduleEmail = async (req, res, next) => {
   try {
-    let { recipients, subject, body, scheduledAt, attachments } = req.body;
+    let { recipients, subject, body, scheduledAt, attachments, googleAccessToken } = req.body;
 
     // Login Email as Primary Email: If recipients is not specified or set to "ME", dynamically default to the authenticated user's registered email
     if (!recipients || (typeof recipients === 'string' && (recipients.trim() === '' || recipients.trim().toUpperCase() === 'ME'))) {
@@ -13,6 +13,11 @@ const scheduleEmail = async (req, res, next) => {
 
     if (!subject || !body || !scheduledAt) {
       return sendError(res, 'Subject, message body, and scheduled time are required', 400);
+    }
+
+    const finalGoogleToken = googleAccessToken || req.headers['x-google-access-token'] || req.user?.googleAccessToken;
+    if (finalGoogleToken && req.user) {
+      req.user.googleAccessToken = finalGoogleToken;
     }
 
     const email = await schedulerService.scheduleEmail(req.user.id, {
@@ -30,6 +35,9 @@ const scheduleEmail = async (req, res, next) => {
       try {
         const fullItem = await schedulerService.getEmailById(req.user.id, email.id);
         if (fullItem) {
+          if (finalGoogleToken && !fullItem.user?.googleAccessToken) {
+            fullItem.user = { ...fullItem.user, googleAccessToken: finalGoogleToken };
+          }
           await schedulerService.dispatchEmail(fullItem);
         }
       } catch (dispErr) {
@@ -37,7 +45,13 @@ const scheduleEmail = async (req, res, next) => {
       }
     }
 
-    return sendSuccess(res, email, 'Email scheduled & dispatched successfully!', 201);
+    // Refresh email status so the frontend immediately receives SENT if dispatched
+    let latestEmail = email;
+    try {
+      latestEmail = (await schedulerService.getEmailById(req.user.id, email.id)) || email;
+    } catch (_) {}
+
+    return sendSuccess(res, latestEmail, 'Email scheduled & dispatched successfully!', 201);
   } catch (err) {
     next(err);
   }
@@ -76,7 +90,11 @@ const getEmails = async (req, res, next) => {
 
 const sendNow = async (req, res, next) => {
   try {
-    const email = await schedulerService.sendNow(req.user.id, req.params.id);
+    const finalGoogleToken = req.headers['x-google-access-token'] || req.user?.googleAccessToken;
+    if (finalGoogleToken && req.user) {
+      req.user.googleAccessToken = finalGoogleToken;
+    }
+    const email = await schedulerService.sendNow(req.user.id, req.params.id, req.user);
     return sendSuccess(res, email, 'Email dispatched immediately');
   } catch (err) {
     next(err);

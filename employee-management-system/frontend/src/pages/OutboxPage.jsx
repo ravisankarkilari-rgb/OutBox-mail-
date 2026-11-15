@@ -299,15 +299,15 @@ export const OutboxPage = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {item.status === 'SCHEDULED' && (
+                        {(item.status === 'SCHEDULED' || item.status === 'FAILED') && (
                           <button
                             onClick={() => handleSendNow(item.id)}
                             disabled={actionLoading}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg transition"
-                            title="Send Immediately"
+                            title={item.status === 'FAILED' ? 'Retry Delivery' : 'Send Immediately'}
                           >
                             <Send className="w-3 h-3" />
-                            <span>Send Now</span>
+                            <span>{item.status === 'FAILED' ? 'Retry' : 'Send Now'}</span>
                           </button>
                         )}
                         <button

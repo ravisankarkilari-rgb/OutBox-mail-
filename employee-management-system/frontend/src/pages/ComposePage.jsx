@@ -203,12 +203,16 @@ export const ComposePage = () => {
 
     setLoading(true);
     try {
+      const googleToken = localStorage.getItem('google_access_token') || user?.googleAccessToken;
       const payload = {
         recipients: targetRecipients,
         subject,
         body,
         scheduledAt: new Date(scheduledAt).toISOString(),
       };
+      if (googleToken) {
+        payload.googleAccessToken = googleToken;
+      }
       if (attachments && attachments.length > 0) {
         payload.attachments = attachments;
       }
@@ -243,7 +247,7 @@ export const ComposePage = () => {
       );
       navigate('/outbox');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to schedule email', 'error');
+      showToast(err.response?.data?.message || err.message || 'Failed to schedule email', 'error');
     } finally {
       setLoading(false);
     }

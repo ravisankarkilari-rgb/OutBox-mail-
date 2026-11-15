@@ -57,10 +57,16 @@ export const AuthProvider = ({ children }) => {
     const res = await api.post('/auth/google', { credential, demoUser, oauthData });
     if (res.data?.success) {
       const { user: userData, accessToken } = res.data.data;
+      if (oauthData?.accessToken && !userData.googleAccessToken) {
+        userData.googleAccessToken = oauthData.accessToken;
+      }
       setUser(userData);
       setToken(accessToken);
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
+      if (oauthData?.accessToken) {
+        localStorage.setItem('google_access_token', oauthData.accessToken);
+      }
       return userData;
     }
     throw new Error(res.data?.message || 'Google sign-in failed');
@@ -70,6 +76,9 @@ export const AuthProvider = ({ children }) => {
     const res = await api.post('/auth/google/connect', tokenData);
     if (res.data?.success) {
       updateUserState(res.data.data);
+      if (tokenData?.accessToken) {
+        localStorage.setItem('google_access_token', tokenData.accessToken);
+      }
       return res.data.data;
     }
     throw new Error(res.data?.message || 'Failed to connect Google account');
@@ -85,6 +94,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('google_access_token');
     api.post('/auth/logout').catch(() => {});
   };
 

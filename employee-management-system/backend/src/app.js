@@ -44,13 +44,16 @@ app.use(
   })
 );
 
-// CORS
-app.use(cors({
-  origin: true, // Allow frontend dev server and production origins
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// CORS - Allow frontend dev server, production origins, and all client headers
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-google-access-token', 'X-Google-Access-Token', 'Accept', 'Origin', 'X-Requested-With'],
+  })
+);
+app.options('*', cors());
 
 // Rate limiting: Bypassed in development/testing; generous in production (1,500 req/15 min)
 const isDev = process.env.NODE_ENV !== 'production';

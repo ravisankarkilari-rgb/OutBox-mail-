@@ -153,6 +153,22 @@ class SchedulerService {
       emailData.attachments = attachmentJson;
     }
 
+    // Ensure foreign key integrity in SQLite (guarantee user exists before creating scheduled email)
+    try {
+      const userExists = await prisma.user.findUnique({ where: { id: userId } });
+      if (!userExists) {
+        await prisma.user.create({
+          data: {
+            id: userId,
+            email: `${userId}@placeholder.local`,
+            password: 'ephemeral-session-hash',
+            role: 'USER',
+            name: 'User',
+          },
+        });
+      }
+    } catch (_) {}
+
     return prisma.scheduledEmail.create({
       data: emailData,
     });
@@ -232,6 +248,18 @@ class SchedulerService {
     };
   }
 
+  // Get a single scheduled email by ID with full user context
+  async getEmailById(userId, id) {
+    return prisma.scheduledEmail.findFirst({
+      where: { id, userId },
+      include: {
+        user: {
+          include: { smtpConfig: true },
+        },
+      },
+    });
+  }
+
   // Cancel or delete a scheduled email
   async deleteEmail(userId, id) {
     const email = await prisma.scheduledEmail.findFirst({ where: { id, userId } });
@@ -240,12 +268,15 @@ class SchedulerService {
   }
 
   // Send an email immediately right now
-  async sendNow(userId, id) {
+  async sendNow(userId, id, currentUser = null) {
     const email = await prisma.scheduledEmail.findFirst({
       where: { id, userId },
       include: { user: { include: { smtpConfig: true } } },
     });
     if (!email) throw new Error('Email not found');
+    if (currentUser?.googleAccessToken && !email.user?.googleAccessToken) {
+      email.user = { ...email.user, googleAccessToken: currentUser.googleAccessToken };
+    }
     await this.dispatchEmail(email);
     return prisma.scheduledEmail.findUnique({ where: { id } });
   }
