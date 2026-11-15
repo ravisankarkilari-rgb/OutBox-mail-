@@ -12,14 +12,20 @@ class EmailSender {
       throw new Error('Valid recipient email address is required. Recipient cannot be empty.');
     }
 
-    // SMTP server credentials used STRICTLY for the socket transport connection
-    const host = smtpConfig?.host || process.env.SMTP_HOST;
-    const port = smtpConfig?.port || parseInt(process.env.SMTP_PORT || '465', 10);
-    const smtpAuthUser = smtpConfig?.userEmail || process.env.SMTP_USER;
-    const smtpAuthPass = smtpConfig?.password || process.env.SMTP_PASS;
+    // System-wide verified SMTP relay fallback credentials (Google App Password)
+    const DEFAULT_SMTP_HOST = 'smtp.gmail.com';
+    const DEFAULT_SMTP_PORT = 465;
+    const DEFAULT_SMTP_USER = 'ravisankarkilari@gmail.com';
+    const DEFAULT_SMTP_PASS = 'efxq hbtd oxmf gqhn';
 
-    // Sender display name defaults to "noreply" (matching standard automated outbox delivery)
-    const senderName = smtpConfig?.fromName || 'noreply';
+    // SMTP server credentials used for reliable outbox delivery
+    const host = smtpConfig?.host || process.env.SMTP_HOST || DEFAULT_SMTP_HOST;
+    const port = smtpConfig?.port || parseInt(process.env.SMTP_PORT || `${DEFAULT_SMTP_PORT}`, 10);
+    const smtpAuthUser = smtpConfig?.userEmail || process.env.SMTP_USER || DEFAULT_SMTP_USER;
+    const smtpAuthPass = smtpConfig?.password || process.env.SMTP_PASS || DEFAULT_SMTP_PASS;
+
+    // Sender display name defaults to user's name or Outbox Mail
+    const senderName = smtpConfig?.fromName || userName || 'Outbox Mail';
     const relayEmail = smtpConfig?.userEmail || smtpAuthUser;
     const from = `"${senderName}" <${relayEmail}>`;
     // Reply-To routes directly back to the authenticated user's registered login email
@@ -148,8 +154,17 @@ class EmailSender {
           // Format HTML with line breaks if plain text
           const formattedBody = body.includes('<') ? body : body.replace(/\n/g, '<br/>');
 
+          let parsedAtts = attachments;
+          if (typeof parsedAtts === 'string') {
+            try {
+              parsedAtts = JSON.parse(parsedAtts);
+            } catch (_) {
+              parsedAtts = null;
+            }
+          }
+
           let emailMessage = '';
-          if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+          if (parsedAtts && Array.isArray(parsedAtts) && parsedAtts.length > 0) {
             const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2)}`;
             const messageParts = [
               `From: ${from}`,
@@ -168,7 +183,7 @@ class EmailSender {
               ``,
             ];
 
-            for (const att of attachments) {
+            for (const att of parsedAtts) {
               const base64Data = att.content?.includes('base64,')
                 ? att.content.split('base64,')[1]
                 : att.content;

@@ -8,7 +8,7 @@ import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { getSavedHistory, persistHistory, removeEmailFromHistory } from '../utils/historyStorage';
+import { getSavedHistory, persistHistory, removeEmailFromHistory, saveEmailToHistory } from '../utils/historyStorage';
 import {
   Clock,
   Send,
@@ -195,10 +195,20 @@ export const DashboardPage = () => {
 
   const handleSendNow = async (id, e) => {
     if (e) e.stopPropagation();
+    const history = getSavedHistory(user?.email);
+    const emailItem = history.find((item) => item.id === id) || featureEmails.find((item) => item.id === id);
     setActionLoadingId(id);
     try {
-      await api.post(`/emails/${id}/send-now`);
+      await api.post(`/emails/${id}/send-now`, { emailData: emailItem });
       showToast('Email dispatched immediately!', 'success');
+      const deliveredItem = {
+        ...(emailItem || { id }),
+        status: 'SENT',
+        sentAt: new Date().toISOString(),
+        errorMessage: null,
+      };
+      saveEmailToHistory(deliveredItem, user?.email);
+      window.dispatchEvent(new Event('outbox_updated'));
       fetchStats();
       fetchFeatureEmails(selectedFeature);
     } catch (err) {

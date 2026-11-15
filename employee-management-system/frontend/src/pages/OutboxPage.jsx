@@ -9,7 +9,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmailStatusBadge } from '../components/Badge';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { getSavedHistory, persistHistory, removeEmailFromHistory } from '../utils/historyStorage';
+import { getSavedHistory, persistHistory, removeEmailFromHistory, saveEmailToHistory } from '../utils/historyStorage';
 import {
   Clock,
   Send,
@@ -101,16 +101,22 @@ export const OutboxPage = () => {
   };
 
   const handleSendNow = async (id) => {
+    const emailItem = emails.find((e) => e.id === id) || getSavedHistory(user?.email).find((e) => e.id === id);
     setActionLoading(true);
     try {
-      await api.post(`/emails/${id}/send-now`);
+      await api.post(`/emails/${id}/send-now`, { emailData: emailItem });
       showToast('Email dispatched immediately!', 'success');
       // Update item in local list and storage
-      const updated = emails.map((e) =>
-        e.id === id ? { ...e, status: 'SENT', sentAt: new Date().toISOString() } : e
-      );
-      setEmails(updated);
-      persistHistory(updated, user?.email);
+      const deliveredItem = {
+        ...(emailItem || { id }),
+        status: 'SENT',
+        sentAt: new Date().toISOString(),
+        errorMessage: null,
+      };
+      saveEmailToHistory(deliveredItem, user?.email);
+      window.dispatchEvent(new Event('outbox_updated'));
+      const remainingHistory = getSavedHistory(user?.email);
+      setEmails(activeTab === 'ALL' ? remainingHistory : remainingHistory.filter((e) => e.status === activeTab));
       fetchOutbox(activeTab);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to dispatch email', 'error');
