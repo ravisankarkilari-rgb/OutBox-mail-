@@ -1,5 +1,6 @@
 const { prisma } = require('../config/database');
 const emailSender = require('./emailSender');
+const gmailApiService = require('./gmailApi.service');
 
 class SchedulerService {
   constructor() {
@@ -66,13 +67,27 @@ class SchedulerService {
 
       console.log(`🚀 Dispatching email "${item.subject}" to ${item.recipientCount} recipient(s)...`);
 
-      // Dispatch
-      await emailSender.send({
-        to: item.recipients,
-        subject: item.subject,
-        body: item.body,
-        smtpConfig: item.user?.smtpConfig,
-      });
+      // Dispatch via Gmail API if user connected Google OAuth, otherwise fallback to SMTP
+      if (item.user?.googleAccessToken || item.user?.googleRefreshToken) {
+        console.log(`🔑 Using Google OAuth (Gmail API) to send directly from ${item.user.email}...`);
+        await gmailApiService.send({
+          user: item.user,
+          to: item.recipients,
+          subject: item.subject,
+          body: item.body,
+          attachments: item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : null,
+        });
+      } else {
+        await emailSender.send({
+          to: item.recipients,
+          subject: item.subject,
+          body: item.body,
+          attachments: item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : null,
+          smtpConfig: item.user?.smtpConfig,
+          userEmail: item.user?.email,
+          userName: item.user?.name,
+        });
+      }
 
       // Mark as SENT
       await prisma.scheduledEmail.update({
@@ -97,8 +112,8 @@ class SchedulerService {
     }
   }
 
-  // Create a new scheduled email (supports single or up to 100+ recipients)
-  async scheduleEmail(userId, { recipients, subject, body, scheduledAt }) {
+  // Create a new scheduled email (supports single or up to 100+ recipients, plus attachments)
+  async scheduleEmail(userId, { recipients, subject, body, scheduledAt, attachments = null }) {
     // Parse recipients (comma-separated, newline-separated or array)
     let emailList = [];
     if (Array.isArray(recipients)) {
@@ -119,16 +134,27 @@ class SchedulerService {
       throw new Error('Invalid scheduled date and time');
     }
 
+    let attachmentJson = null;
+    if (attachments) {
+      attachmentJson = typeof attachments === 'string' ? attachments : JSON.stringify(attachments);
+    }
+
+    const emailData = {
+      userId,
+      recipients: emailList.join(', '),
+      recipientCount: emailList.length,
+      subject: subject.trim(),
+      body: body.trim(),
+      scheduledAt: scheduledDate,
+      status: 'SCHEDULED',
+    };
+
+    if (attachmentJson) {
+      emailData.attachments = attachmentJson;
+    }
+
     return prisma.scheduledEmail.create({
-      data: {
-        userId,
-        recipients: emailList.join(', '),
-        recipientCount: emailList.length,
-        subject: subject.trim(),
-        body: body.trim(),
-        scheduledAt: scheduledDate,
-        status: 'SCHEDULED',
-      },
+      data: emailData,
     });
   }
 
@@ -168,6 +194,41 @@ class SchedulerService {
         limit: limitNum,
         totalPages: Math.ceil(total / limitNum),
       },
+    };
+  }
+
+  // Send a dynamic system-generated email directly to the authenticated user's registered login address
+  async sendSystemEmailToUser(userId, { subject, body, attachments = null }) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { smtpConfig: true },
+    });
+    if (!user || !user.email) {
+      throw new Error('Authenticated user with valid email not found');
+    }
+
+    // Dynamic Recipient: Always dynamically send to the user's login email address
+    const recipient = user.email;
+
+    const email = await this.scheduleEmail(userId, {
+      recipients: recipient,
+      subject: subject || 'Outbox Mail Notification',
+      body: body || `<p>Hello ${user.name || user.email},</p><p>This is a system notification sent directly to your registered login email address.</p>`,
+      scheduledAt: new Date(),
+      attachments,
+    });
+
+    // Dispatch immediately
+    await this.dispatchEmail({
+      ...email,
+      user,
+    });
+
+    return {
+      success: true,
+      recipient,
+      emailId: email.id,
+      message: `System email dispatched directly to ${recipient}`,
     };
   }
 

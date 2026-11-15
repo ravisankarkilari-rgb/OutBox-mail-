@@ -41,24 +41,162 @@ class AuthService {
     return safeUser;
   }
 
-  // Google OAuth verification and user synchronization
-  async googleAuth(credential, demoUser = null) {
-    let email = null;
-    let name = null;
+  // Exchange Google authorization code for access_token and refresh_token
+  async exchangeGoogleAuthCode(code, redirectUri = null) {
+    const clientId = (process.env.GOOGLE_CLIENT_ID || '').replace(/['"]/g, '').trim();
+    const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').replace(/['"]/g, '').trim();
 
-    if (!credential && (!demoUser || !demoUser.email)) {
-      throw new AppError('Google credential or email is required', 400);
+    if (!clientId || !clientSecret) {
+      throw new AppError('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required in backend/.env for Google OAuth exchange', 400);
     }
 
-    if (demoUser && demoUser.email) {
-      // Demo / simulated Google login when client ID is in sandbox
-      email = demoUser.email;
-      name = demoUser.name || email.split('@')[0];
-    } else {
-      // Verify Google ID token with Google's official tokeninfo endpoint
-      const payload = await this.verifyGoogleToken(credential);
-      email = payload.email;
-      name = payload.name;
+    return new Promise((resolve, reject) => {
+      const postData = new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri || 'postmessage',
+        grant_type: 'authorization_code',
+      }).toString();
+
+      const req = https.request(
+        'https://oauth2.googleapis.com/token',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(postData),
+          },
+        },
+        (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', async () => {
+            try {
+              const tokenData = JSON.parse(data);
+              if (tokenData.error) {
+                return reject(new AppError(`Google OAuth error: ${tokenData.error_description || tokenData.error}`, 400));
+              }
+              resolve(tokenData);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }
+      );
+
+      req.on('error', (err) => reject(new AppError(`OAuth exchange request failed: ${err.message}`, 500)));
+      req.write(postData);
+      req.end();
+    });
+  }
+
+  // Save Google OAuth tokens directly to a user for passwordless direct Gmail API sending
+  async saveGoogleTokens(userId, { code, accessToken, refreshToken, expiresIn }) {
+    let finalAccessToken = accessToken;
+    let finalRefreshToken = refreshToken;
+    let expiry = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
+
+    if (code) {
+      const exchanged = await this.exchangeGoogleAuthCode(code);
+      finalAccessToken = exchanged.access_token;
+      if (exchanged.refresh_token) finalRefreshToken = exchanged.refresh_token;
+      expiry = new Date(Date.now() + (exchanged.expires_in || 3600) * 1000);
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        googleAccessToken: finalAccessToken || undefined,
+        googleRefreshToken: finalRefreshToken || undefined,
+        googleTokenExpiry: expiry || undefined,
+      },
+      include: { smtpConfig: true },
+    });
+
+    const { password: _, ...safeUser } = user;
+    return safeUser;
+  }
+
+  fetchGoogleUserInfo(accessToken) {
+    return new Promise((resolve, reject) => {
+      https
+        .get(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+          (res) => {
+            let data = '';
+            res.on('data', (chunk) => (data += chunk));
+            res.on('end', () => {
+              try {
+                resolve(JSON.parse(data));
+              } catch (err) {
+                reject(err);
+              }
+            });
+          }
+        )
+        .on('error', reject);
+    });
+  }
+
+  // Google OAuth verification and user synchronization
+  async googleAuth(credential, demoUser = null, oauthData = null) {
+    let email = null;
+    let name = null;
+    let googleTokens = null;
+
+    if (oauthData?.code) {
+      const exchanged = await this.exchangeGoogleAuthCode(oauthData.code);
+      googleTokens = {
+        accessToken: exchanged.access_token,
+        refreshToken: exchanged.refresh_token,
+        expiry: new Date(Date.now() + (exchanged.expires_in || 3600) * 1000),
+      };
+      if (exchanged.id_token) {
+        try {
+          const payload = await this.verifyGoogleToken(exchanged.id_token);
+          email = payload.email;
+          name = payload.name;
+        } catch (e) {
+          console.warn('ID token verify fallback:', e.message);
+        }
+      }
+      if (!email && exchanged.access_token) {
+        const userInfo = await this.fetchGoogleUserInfo(exchanged.access_token);
+        email = userInfo.email;
+        name = userInfo.name || email.split('@')[0];
+      }
+    } else if (oauthData?.accessToken) {
+      googleTokens = {
+        accessToken: oauthData.accessToken,
+        refreshToken: oauthData.refreshToken || null,
+        expiry: oauthData.expiresIn ? new Date(Date.now() + oauthData.expiresIn * 1000) : null,
+      };
+      if (!email && oauthData.accessToken) {
+        const userInfo = await this.fetchGoogleUserInfo(oauthData.accessToken);
+        email = userInfo.email;
+        name = userInfo.name || email.split('@')[0];
+      }
+    }
+
+    if (!email) {
+      if (!credential && (!demoUser || !demoUser.email)) {
+        throw new AppError('Google credential or email is required', 400);
+      }
+
+      if (demoUser && demoUser.email) {
+        // Demo / simulated Google login when client ID is in sandbox
+        email = demoUser.email;
+        name = demoUser.name || email.split('@')[0];
+      } else if (credential) {
+        // Verify Google ID token with Google's official tokeninfo endpoint
+        const payload = await this.verifyGoogleToken(credential);
+        email = payload.email;
+        name = payload.name;
+      }
     }
 
     if (!email) {
@@ -79,6 +217,19 @@ class AuthService {
           name: name || email.split('@')[0],
           password: randomPassword,
           role: 'USER',
+          googleAccessToken: googleTokens?.accessToken,
+          googleRefreshToken: googleTokens?.refreshToken,
+          googleTokenExpiry: googleTokens?.expiry,
+        },
+        include: { smtpConfig: true },
+      });
+    } else if (googleTokens) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleAccessToken: googleTokens.accessToken || user.googleAccessToken,
+          googleRefreshToken: googleTokens.refreshToken || user.googleRefreshToken,
+          googleTokenExpiry: googleTokens.expiry || user.googleTokenExpiry,
         },
         include: { smtpConfig: true },
       });

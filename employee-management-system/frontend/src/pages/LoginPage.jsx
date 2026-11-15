@@ -49,15 +49,24 @@ export const LoginPage = () => {
           <p className="text-sm text-slate-500 mt-1">Automated Scheduled Email Dispatcher</p>
         </div>
 
-        {/* Sign in with Google */}
-        <div className="mb-5">
+        {/* Primary Recommended: Sign in with Google (Direct Gmail Dispatch) */}
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-sky-50 via-indigo-50/50 to-white border border-sky-200 shadow-sm space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-sky-600 text-white rounded-lg shadow-xs">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">Direct Gmail Dispatch (0 Passwords)</p>
+              <p className="text-[11px] text-slate-500">Sign in with Google to send directly from your personal Gmail</p>
+            </div>
+          </div>
           <GoogleSignInButton text="Sign in with Google" />
         </div>
 
         <div className="relative flex items-center justify-center mb-5">
           <div className="border-t border-slate-200 w-full" />
           <span className="bg-white px-3 text-xs uppercase text-slate-400 font-semibold tracking-wider">
-            Or with email
+            Or with email & password
           </span>
           <div className="border-t border-slate-200 w-full" />
         </div>

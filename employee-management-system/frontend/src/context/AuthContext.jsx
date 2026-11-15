@@ -44,8 +44,8 @@ export const AuthProvider = ({ children }) => {
     throw new Error(res.data?.message || 'Login failed');
   };
 
-  const loginWithGoogle = async (credential, demoUser = null) => {
-    const res = await api.post('/auth/google', { credential, demoUser });
+  const loginWithGoogle = async (credential, demoUser = null, oauthData = null) => {
+    const res = await api.post('/auth/google', { credential, demoUser, oauthData });
     if (res.data?.success) {
       const { user: userData, accessToken } = res.data.data;
       setUser(userData);
@@ -55,6 +55,15 @@ export const AuthProvider = ({ children }) => {
       return userData;
     }
     throw new Error(res.data?.message || 'Google sign-in failed');
+  };
+
+  const connectGoogle = async (tokenData) => {
+    const res = await api.post('/auth/google/connect', tokenData);
+    if (res.data?.success) {
+      updateUserState(res.data.data);
+      return res.data.data;
+    }
+    throw new Error(res.data?.message || 'Failed to connect Google account');
   };
 
   const register = async (email, password, role = 'USER') => {
@@ -92,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         isEmployee,
         login,
         loginWithGoogle,
+        connectGoogle,
         register,
         logout,
         updateUserState,

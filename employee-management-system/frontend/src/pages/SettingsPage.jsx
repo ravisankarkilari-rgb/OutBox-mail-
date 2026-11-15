@@ -3,7 +3,7 @@ import api from '../services/api';
 import { Card } from '../components/Card';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { Settings, Save, ShieldCheck, Mail, Info, Key, Server } from 'lucide-react';
+import { Settings, Save, ShieldCheck, Mail, Info, Key, Server, CheckCircle } from 'lucide-react';
 
 export const SettingsPage = () => {
   const { user } = useAuth();
@@ -63,17 +63,16 @@ export const SettingsPage = () => {
         </p>
       </div>
 
-      {/* Simulator Mode Alert */}
-      <div className="bg-sky-50 border border-sky-200 rounded-2xl p-5 flex items-start space-x-4">
-        <div className="p-2 bg-sky-100 text-sky-700 rounded-xl">
-          <Info className="w-5 h-5 flex-shrink-0" />
+      {/* Live Dispatch Active Alert */}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start space-x-4">
+        <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+          <CheckCircle className="w-5 h-5 flex-shrink-0" />
         </div>
-        <div className="text-xs text-sky-900 space-y-1">
-          <p className="font-semibold text-sm">Built-in Dispatch Simulator Active</p>
+        <div className="text-xs text-emerald-900 space-y-1">
+          <p className="font-semibold text-sm">System Live Dispatch Relay Active</p>
           <p>
-            By default, all scheduled emails are automatically dispatched and recorded in your
-            Outbox/Sent history. To send actual real-world emails to inboxes, enter your SMTP details
-            below.
+            Scheduled emails are automatically dispatched live to recipients from your logged-in email address.
+            <strong> No user needs to enter an SMTP password!</strong> The fields below are completely optional if you ever want to override and use a custom private SMTP server.
           </p>
         </div>
       </div>

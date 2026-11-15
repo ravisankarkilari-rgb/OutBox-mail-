@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -7,47 +7,44 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
   const { loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const googleBtnRef = useRef(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('ravisankarkilari@gmail.com');
+  const [googleEmail, setGoogleEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').replace(/['"]/g, '').trim();
 
-  // Handle Google OAuth ID token returned from GIS
-  const handleCredentialResponse = async (response) => {
-    try {
-      setLoading(true);
-      await loginWithGoogle(response.credential);
-      showToast('Signed in with Google successfully!', 'success');
-      navigate('/dashboard');
-    } catch (err) {
-      showToast(err.message || 'Google authentication failed', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (clientId && window.google?.accounts?.id && googleBtnRef.current) {
+  const handleGoogleOAuthClick = () => {
+    if (clientId && window.google?.accounts?.oauth2) {
       try {
-        window.google.accounts.id.initialize({
+        const codeClient = window.google.accounts.oauth2.initCodeClient({
           client_id: clientId,
-          callback: handleCredentialResponse,
+          scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+          ux_mode: 'popup',
+          callback: async (codeResponse) => {
+            if (codeResponse.error) {
+              showToast(codeResponse.error_description || 'Google authorization cancelled', 'error');
+              return;
+            }
+            setLoading(true);
+            try {
+              await loginWithGoogle(null, null, { code: codeResponse.code });
+              showToast('Signed in with Google! Direct Gmail API dispatch enabled (0 passwords).', 'success');
+              navigate('/dashboard');
+            } catch (err) {
+              showToast(err.message || 'Google OAuth failed', 'error');
+            } finally {
+              setLoading(false);
+            }
+          },
         });
-
-        window.google.accounts.id.renderButton(googleBtnRef.current, {
-          theme: 'outline',
-          size: 'large',
-          width: '100%',
-          text: 'continue_with',
-          shape: 'rectangular',
-        });
-      } catch (e) {
-        console.warn('Google Identity Services initialization failed:', e);
+        codeClient.requestCode();
+        return;
+      } catch (err) {
+        console.warn('OAuth code client failed, trying token client:', err);
       }
     }
-  }, [clientId]);
+    setShowPrompt(true);
+  };
 
   const handleManualGoogleAuth = async (e) => {
     if (e) e.preventDefault();
@@ -74,19 +71,13 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
 
   return (
     <div className="w-full">
-      {/* If Google Client ID is configured and GIS loaded, render the official button container */}
-      {clientId ? (
-        <div ref={googleBtnRef} className="w-full flex justify-center my-2" />
-      ) : null}
-
-      {/* Primary Google branded button */}
-      {(!clientId || !window.google?.accounts?.id) && (
-        <button
-          type="button"
-          onClick={() => setShowPrompt(true)}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-xl border border-slate-300 shadow-sm transition hover:shadow focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-60"
-        >
+      {/* Primary Google OAuth branded button */}
+      <button
+        type="button"
+        onClick={handleGoogleOAuthClick}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-xl border border-slate-300 shadow-sm transition hover:shadow focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-60"
+      >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -107,7 +98,6 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
           </svg>
           <span>{loading ? 'Authenticating...' : text}</span>
         </button>
-      )}
 
       {/* Google Sign-in Instant Modal */}
       {showPrompt && (
@@ -136,24 +126,49 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-800">Sign in with Google</h3>
-                <p className="text-xs text-slate-500">Fast 1-click Google authentication</p>
+                <p className="text-xs text-slate-500">Sets your verified Primary Email for all outbox dispatches</p>
               </div>
             </div>
 
             <form onSubmit={handleManualGoogleAuth} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                  Google Account Email
+                  Google Account Email (Primary Email)
                 </label>
                 <input
                   type="email"
                   value={googleEmail}
                   onChange={(e) => setGoogleEmail(e.target.value)}
-                  placeholder="your.email@gmail.com"
+                  placeholder="e.g. 23btrcl198@jainuniversity.ac.in"
                   required
                   autoFocus
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
+              </div>
+
+              {/* Quick Select Preset Accounts */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] text-slate-400 font-medium">Quick 1-click account select:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setGoogleEmail('23btrcl198@jainuniversity.ac.in')}
+                    className="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200 transition font-mono"
+                  >
+                    23btrcl198@jainuniversity.ac.in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGoogleEmail('satyamkilari20@gmail.com')}
+                    className="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200 transition font-mono"
+                  >
+                    satyamkilari20@gmail.com
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-tight">
+                🛡️ <strong>Single Delivery Guarantee:</strong> All outbox emails will be sent strictly to this login address. No other email will receive your messages.
               </div>
 
               <div className="flex gap-2 justify-end pt-2">

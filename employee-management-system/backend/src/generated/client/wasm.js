@@ -125,6 +125,9 @@ exports.Prisma.UserScalarFieldEnum = {
   password: 'password',
   name: 'name',
   role: 'role',
+  googleAccessToken: 'googleAccessToken',
+  googleRefreshToken: 'googleRefreshToken',
+  googleTokenExpiry: 'googleTokenExpiry',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -148,6 +151,7 @@ exports.Prisma.ScheduledEmailScalarFieldEnum = {
   recipients: 'recipients',
   subject: 'subject',
   body: 'body',
+  attachments: 'attachments',
   scheduledAt: 'scheduledAt',
   status: 'status',
   sentAt: 'sentAt',

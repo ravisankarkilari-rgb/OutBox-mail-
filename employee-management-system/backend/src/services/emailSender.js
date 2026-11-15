@@ -7,21 +7,57 @@ const { resolveHost } = require('../utils/dnsHelper');
  * Resilient against Windows DNS resolution bugs (getaddrinfo ENOENT) and ISP blocks.
  */
 class EmailSender {
-  async send({ to, subject, body, smtpConfig = null }) {
-    // Check if SMTP credentials are provided
+  async send({ to, subject, body, attachments = null, smtpConfig = null, userEmail = null, userName = null }) {
+    if (!to || typeof to !== 'string' || to.trim().length === 0) {
+      throw new Error('Valid recipient email address is required. Recipient cannot be empty.');
+    }
+
+    // SMTP server credentials used STRICTLY for the socket transport connection
     const host = smtpConfig?.host || process.env.SMTP_HOST;
     const port = smtpConfig?.port || parseInt(process.env.SMTP_PORT || '465', 10);
-    const user = smtpConfig?.userEmail || process.env.SMTP_USER;
-    const pass = smtpConfig?.password || process.env.SMTP_PASS;
-    const from = smtpConfig?.fromName
-      ? `"${smtpConfig.fromName}" <${user}>`
-      : user || 'outbox-mailer@system.local';
+    const smtpAuthUser = smtpConfig?.userEmail || process.env.SMTP_USER;
+    const smtpAuthPass = smtpConfig?.password || process.env.SMTP_PASS;
 
-    if (host && user && pass) {
+    // Sender display name defaults to "noreply" (matching standard automated outbox delivery)
+    const senderName = smtpConfig?.fromName || 'noreply';
+    const relayEmail = smtpConfig?.userEmail || smtpAuthUser;
+    const from = `"${senderName}" <${relayEmail}>`;
+    // Reply-To routes directly back to the authenticated user's registered login email
+    const replyTo = userEmail || relayEmail;
+
+    // Target recipients STRICTLY from "to" (never overridden by SMTP credentials or admin email)
+    const recipientsList = to.split(/[\n,;]+/).map((r) => r.trim()).filter((r) => r.length > 0);
+    if (recipientsList.length === 0) {
+      throw new Error('Valid recipient email address is required.');
+    }
+
+    if (host && smtpAuthUser && smtpAuthPass) {
       try {
-        console.log(`🌐 Transmitting live email via SMTP (${host}:${port}) to: ${to}...`);
-        await this.sendViaSmtp({ host, port, user, pass, from, to, subject, body });
-        console.log(`✅ Live email delivered via SMTP to ${to}!`);
+        console.log(`🌐 Transmitting ${recipientsList.length} private email(s) via SMTP (${host}:${port}) as "${from}"...`);
+
+        // Send individualized emails so every recipient only sees themselves and the sender
+        for (let i = 0; i < recipientsList.length; i++) {
+          const recipient = recipientsList[i];
+          console.log(`📨 [${i + 1}/${recipientsList.length}] Delivering live to: ${recipient}...`);
+          await this.sendViaSmtp({
+            host,
+            port,
+            user: smtpAuthUser,
+            pass: smtpAuthPass,
+            from,
+            replyTo,
+            to: recipient,
+            subject,
+            body,
+            attachments,
+          });
+          if (i < recipientsList.length - 1) {
+            // Short 200ms pause to ensure smooth delivery across Google servers
+            await new Promise((res) => setTimeout(res, 200));
+          }
+        }
+
+        console.log(`✅ All ${recipientsList.length} private email(s) successfully delivered!`);
         return { success: true, mode: 'LIVE_SMTP', deliveredAt: new Date() };
       } catch (err) {
         console.error('❌ SMTP transmission failed:', err.message);
@@ -45,7 +81,7 @@ class EmailSender {
     };
   }
 
-  async sendViaSmtp({ host, port, user, pass, from, to, subject, body }) {
+  async sendViaSmtp({ host, port, user, pass, from, replyTo, to, subject, body, attachments = null }) {
     // Resolve host safely (handles Windows getaddrinfo ENOENT bug)
     const resolvedIp = await resolveHost(host);
     console.log(`🔌 Connecting to SMTP target: ${resolvedIp}:${port} (SNI: ${host})...`);
@@ -122,17 +158,57 @@ class EmailSender {
           // Format HTML with line breaks if plain text
           const formattedBody = body.includes('<') ? body : body.replace(/\n/g, '<br/>');
 
-          const emailMessage = [
-            `From: ${from}`,
-            `To: ${to}`,
-            `Subject: ${subject}`,
-            `Date: ${new Date().toUTCString()}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: text/html; charset=utf-8`,
-            ``,
-            formattedBody,
-            `.`,
-          ].join('\r\n');
+          let emailMessage = '';
+          if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+            const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+            const messageParts = [
+              `From: ${from}`,
+              `Reply-To: ${replyTo || from}`,
+              `To: ${to}`,
+              `Subject: ${subject}`,
+              `Date: ${new Date().toUTCString()}`,
+              `MIME-Version: 1.0`,
+              `Content-Type: multipart/mixed; boundary="${boundary}"`,
+              ``,
+              `--${boundary}`,
+              `Content-Type: text/html; charset=utf-8`,
+              `Content-Transfer-Encoding: 7bit`,
+              ``,
+              formattedBody,
+              ``,
+            ];
+
+            for (const att of attachments) {
+              const base64Data = att.content?.includes('base64,')
+                ? att.content.split('base64,')[1]
+                : att.content;
+              const mimeType = att.contentType || 'application/octet-stream';
+              messageParts.push(
+                `--${boundary}`,
+                `Content-Type: ${mimeType}; name="${att.filename}"`,
+                `Content-Disposition: attachment; filename="${att.filename}"`,
+                `Content-Transfer-Encoding: base64`,
+                ``,
+                base64Data,
+                ``
+              );
+            }
+            messageParts.push(`--${boundary}--`, ``);
+            emailMessage = messageParts.join('\r\n') + '.\r\n';
+          } else {
+            emailMessage = [
+              `From: ${from}`,
+              `Reply-To: ${replyTo || from}`,
+              `To: ${to}`,
+              `Subject: ${subject}`,
+              `Date: ${new Date().toUTCString()}`,
+              `MIME-Version: 1.0`,
+              `Content-Type: text/html; charset=utf-8`,
+              ``,
+              formattedBody,
+              `.`,
+            ].join('\r\n');
+          }
           write(emailMessage);
         } else if (step === 8 && code === 250) {
           step = 9;

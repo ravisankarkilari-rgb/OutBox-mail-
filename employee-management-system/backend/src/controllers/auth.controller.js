@@ -13,9 +13,24 @@ const login = async (req, res, next) => {
 
 const googleLogin = async (req, res, next) => {
   try {
-    const { credential, demoUser } = req.body;
-    const result = await authService.googleAuth(credential, demoUser);
+    const { credential, demoUser, oauthData } = req.body;
+    const result = await authService.googleAuth(credential, demoUser, oauthData);
     return sendSuccess(res, result, 'Google authentication successful');
+  } catch (err) {
+    next(err);
+  }
+};
+
+const connectGoogleOAuth = async (req, res, next) => {
+  try {
+    const { code, accessToken, refreshToken, expiresIn } = req.body;
+    const updatedUser = await authService.saveGoogleTokens(req.user.id, {
+      code,
+      accessToken,
+      refreshToken,
+      expiresIn,
+    });
+    return sendSuccess(res, updatedUser, 'Google account connected for direct Gmail sending!');
   } catch (err) {
     next(err);
   }
@@ -56,5 +71,5 @@ const logout = (req, res) => {
   return sendSuccess(res, null, 'Logged out successfully');
 };
 
-module.exports = { login, googleLogin, register, refreshToken, getMe, logout };
+module.exports = { login, googleLogin, connectGoogleOAuth, register, refreshToken, getMe, logout };
 

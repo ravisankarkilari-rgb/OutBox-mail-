@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Users,
   AlertCircle,
+  Paperclip,
 } from 'lucide-react';
 
 export const OutboxPage = () => {
@@ -250,6 +251,38 @@ export const OutboxPage = () => {
                 dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
               />
             </div>
+            {(() => {
+              let attList = [];
+              try {
+                if (selectedEmail.attachments) {
+                  attList = typeof selectedEmail.attachments === 'string'
+                    ? JSON.parse(selectedEmail.attachments)
+                    : selectedEmail.attachments;
+                }
+              } catch (_) {}
+
+              if (attList && attList.length > 0) {
+                return (
+                  <div>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Attachments ({attList.length})
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {attList.map((att, i) => (
+                        <div
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700"
+                        >
+                          <Paperclip className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{att.filename}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
       </Modal>

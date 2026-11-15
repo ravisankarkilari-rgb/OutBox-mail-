@@ -55,6 +55,7 @@ const initTables = async () => {
         "recipients" TEXT NOT NULL,
         "subject" TEXT NOT NULL,
         "body" TEXT NOT NULL,
+        "attachments" TEXT,
         "scheduledAt" DATETIME NOT NULL,
         "status" TEXT NOT NULL DEFAULT 'SCHEDULED',
         "sentAt" DATETIME,
@@ -65,6 +66,18 @@ const initTables = async () => {
         CONSTRAINT "scheduled_emails_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       );
     `);
+    try {
+      await prisma.$executeRawUnsafe('ALTER TABLE "scheduled_emails" ADD COLUMN "attachments" TEXT;');
+    } catch (_) {}
+    try {
+      await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN "googleAccessToken" TEXT;');
+    } catch (_) {}
+    try {
+      await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN "googleRefreshToken" TEXT;');
+    } catch (_) {}
+    try {
+      await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN "googleTokenExpiry" DATETIME;');
+    } catch (_) {}
 
     // Ensure default demo admin account exists
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@company.com';

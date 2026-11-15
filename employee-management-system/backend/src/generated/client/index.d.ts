@@ -1061,6 +1061,9 @@ export namespace Prisma {
     password: string | null
     name: string | null
     role: string | null
+    googleAccessToken: string | null
+    googleRefreshToken: string | null
+    googleTokenExpiry: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1071,6 +1074,9 @@ export namespace Prisma {
     password: string | null
     name: string | null
     role: string | null
+    googleAccessToken: string | null
+    googleRefreshToken: string | null
+    googleTokenExpiry: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1081,6 +1087,9 @@ export namespace Prisma {
     password: number
     name: number
     role: number
+    googleAccessToken: number
+    googleRefreshToken: number
+    googleTokenExpiry: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1093,6 +1102,9 @@ export namespace Prisma {
     password?: true
     name?: true
     role?: true
+    googleAccessToken?: true
+    googleRefreshToken?: true
+    googleTokenExpiry?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1103,6 +1115,9 @@ export namespace Prisma {
     password?: true
     name?: true
     role?: true
+    googleAccessToken?: true
+    googleRefreshToken?: true
+    googleTokenExpiry?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1113,6 +1128,9 @@ export namespace Prisma {
     password?: true
     name?: true
     role?: true
+    googleAccessToken?: true
+    googleRefreshToken?: true
+    googleTokenExpiry?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1196,6 +1214,9 @@ export namespace Prisma {
     password: string
     name: string | null
     role: string
+    googleAccessToken: string | null
+    googleRefreshToken: string | null
+    googleTokenExpiry: Date | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1223,6 +1244,9 @@ export namespace Prisma {
     password?: boolean
     name?: boolean
     role?: boolean
+    googleAccessToken?: boolean
+    googleRefreshToken?: boolean
+    googleTokenExpiry?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     emails?: boolean | User$emailsArgs<ExtArgs>
@@ -1236,6 +1260,9 @@ export namespace Prisma {
     password?: boolean
     name?: boolean
     role?: boolean
+    googleAccessToken?: boolean
+    googleRefreshToken?: boolean
+    googleTokenExpiry?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1246,6 +1273,9 @@ export namespace Prisma {
     password?: boolean
     name?: boolean
     role?: boolean
+    googleAccessToken?: boolean
+    googleRefreshToken?: boolean
+    googleTokenExpiry?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -1269,6 +1299,9 @@ export namespace Prisma {
       password: string
       name: string | null
       role: string
+      googleAccessToken: string | null
+      googleRefreshToken: string | null
+      googleTokenExpiry: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -1671,6 +1704,9 @@ export namespace Prisma {
     readonly password: FieldRef<"User", 'String'>
     readonly name: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'String'>
+    readonly googleAccessToken: FieldRef<"User", 'String'>
+    readonly googleRefreshToken: FieldRef<"User", 'String'>
+    readonly googleTokenExpiry: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -3085,6 +3121,7 @@ export namespace Prisma {
     recipients: string | null
     subject: string | null
     body: string | null
+    attachments: string | null
     scheduledAt: Date | null
     status: string | null
     sentAt: Date | null
@@ -3100,6 +3137,7 @@ export namespace Prisma {
     recipients: string | null
     subject: string | null
     body: string | null
+    attachments: string | null
     scheduledAt: Date | null
     status: string | null
     sentAt: Date | null
@@ -3115,6 +3153,7 @@ export namespace Prisma {
     recipients: number
     subject: number
     body: number
+    attachments: number
     scheduledAt: number
     status: number
     sentAt: number
@@ -3140,6 +3179,7 @@ export namespace Prisma {
     recipients?: true
     subject?: true
     body?: true
+    attachments?: true
     scheduledAt?: true
     status?: true
     sentAt?: true
@@ -3155,6 +3195,7 @@ export namespace Prisma {
     recipients?: true
     subject?: true
     body?: true
+    attachments?: true
     scheduledAt?: true
     status?: true
     sentAt?: true
@@ -3170,6 +3211,7 @@ export namespace Prisma {
     recipients?: true
     subject?: true
     body?: true
+    attachments?: true
     scheduledAt?: true
     status?: true
     sentAt?: true
@@ -3272,6 +3314,7 @@ export namespace Prisma {
     recipients: string
     subject: string
     body: string
+    attachments: string | null
     scheduledAt: Date
     status: string
     sentAt: Date | null
@@ -3306,6 +3349,7 @@ export namespace Prisma {
     recipients?: boolean
     subject?: boolean
     body?: boolean
+    attachments?: boolean
     scheduledAt?: boolean
     status?: boolean
     sentAt?: boolean
@@ -3322,6 +3366,7 @@ export namespace Prisma {
     recipients?: boolean
     subject?: boolean
     body?: boolean
+    attachments?: boolean
     scheduledAt?: boolean
     status?: boolean
     sentAt?: boolean
@@ -3338,6 +3383,7 @@ export namespace Prisma {
     recipients?: boolean
     subject?: boolean
     body?: boolean
+    attachments?: boolean
     scheduledAt?: boolean
     status?: boolean
     sentAt?: boolean
@@ -3365,6 +3411,7 @@ export namespace Prisma {
       recipients: string
       subject: string
       body: string
+      attachments: string | null
       scheduledAt: Date
       status: string
       sentAt: Date | null
@@ -3771,6 +3818,7 @@ export namespace Prisma {
     readonly recipients: FieldRef<"ScheduledEmail", 'String'>
     readonly subject: FieldRef<"ScheduledEmail", 'String'>
     readonly body: FieldRef<"ScheduledEmail", 'String'>
+    readonly attachments: FieldRef<"ScheduledEmail", 'String'>
     readonly scheduledAt: FieldRef<"ScheduledEmail", 'DateTime'>
     readonly status: FieldRef<"ScheduledEmail", 'String'>
     readonly sentAt: FieldRef<"ScheduledEmail", 'DateTime'>
@@ -4125,6 +4173,9 @@ export namespace Prisma {
     password: 'password',
     name: 'name',
     role: 'role',
+    googleAccessToken: 'googleAccessToken',
+    googleRefreshToken: 'googleRefreshToken',
+    googleTokenExpiry: 'googleTokenExpiry',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -4154,6 +4205,7 @@ export namespace Prisma {
     recipients: 'recipients',
     subject: 'subject',
     body: 'body',
+    attachments: 'attachments',
     scheduledAt: 'scheduledAt',
     status: 'status',
     sentAt: 'sentAt',
@@ -4234,6 +4286,9 @@ export namespace Prisma {
     password?: StringFilter<"User"> | string
     name?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
+    googleAccessToken?: StringNullableFilter<"User"> | string | null
+    googleRefreshToken?: StringNullableFilter<"User"> | string | null
+    googleTokenExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     emails?: ScheduledEmailListRelationFilter
@@ -4246,6 +4301,9 @@ export namespace Prisma {
     password?: SortOrder
     name?: SortOrderInput | SortOrder
     role?: SortOrder
+    googleAccessToken?: SortOrderInput | SortOrder
+    googleRefreshToken?: SortOrderInput | SortOrder
+    googleTokenExpiry?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     emails?: ScheduledEmailOrderByRelationAggregateInput
@@ -4261,6 +4319,9 @@ export namespace Prisma {
     password?: StringFilter<"User"> | string
     name?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
+    googleAccessToken?: StringNullableFilter<"User"> | string | null
+    googleRefreshToken?: StringNullableFilter<"User"> | string | null
+    googleTokenExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     emails?: ScheduledEmailListRelationFilter
@@ -4273,6 +4334,9 @@ export namespace Prisma {
     password?: SortOrder
     name?: SortOrderInput | SortOrder
     role?: SortOrder
+    googleAccessToken?: SortOrderInput | SortOrder
+    googleRefreshToken?: SortOrderInput | SortOrder
+    googleTokenExpiry?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -4289,6 +4353,9 @@ export namespace Prisma {
     password?: StringWithAggregatesFilter<"User"> | string
     name?: StringNullableWithAggregatesFilter<"User"> | string | null
     role?: StringWithAggregatesFilter<"User"> | string
+    googleAccessToken?: StringNullableWithAggregatesFilter<"User"> | string | null
+    googleRefreshToken?: StringNullableWithAggregatesFilter<"User"> | string | null
+    googleTokenExpiry?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -4384,6 +4451,7 @@ export namespace Prisma {
     recipients?: StringFilter<"ScheduledEmail"> | string
     subject?: StringFilter<"ScheduledEmail"> | string
     body?: StringFilter<"ScheduledEmail"> | string
+    attachments?: StringNullableFilter<"ScheduledEmail"> | string | null
     scheduledAt?: DateTimeFilter<"ScheduledEmail"> | Date | string
     status?: StringFilter<"ScheduledEmail"> | string
     sentAt?: DateTimeNullableFilter<"ScheduledEmail"> | Date | string | null
@@ -4400,6 +4468,7 @@ export namespace Prisma {
     recipients?: SortOrder
     subject?: SortOrder
     body?: SortOrder
+    attachments?: SortOrderInput | SortOrder
     scheduledAt?: SortOrder
     status?: SortOrder
     sentAt?: SortOrderInput | SortOrder
@@ -4419,6 +4488,7 @@ export namespace Prisma {
     recipients?: StringFilter<"ScheduledEmail"> | string
     subject?: StringFilter<"ScheduledEmail"> | string
     body?: StringFilter<"ScheduledEmail"> | string
+    attachments?: StringNullableFilter<"ScheduledEmail"> | string | null
     scheduledAt?: DateTimeFilter<"ScheduledEmail"> | Date | string
     status?: StringFilter<"ScheduledEmail"> | string
     sentAt?: DateTimeNullableFilter<"ScheduledEmail"> | Date | string | null
@@ -4435,6 +4505,7 @@ export namespace Prisma {
     recipients?: SortOrder
     subject?: SortOrder
     body?: SortOrder
+    attachments?: SortOrderInput | SortOrder
     scheduledAt?: SortOrder
     status?: SortOrder
     sentAt?: SortOrderInput | SortOrder
@@ -4458,6 +4529,7 @@ export namespace Prisma {
     recipients?: StringWithAggregatesFilter<"ScheduledEmail"> | string
     subject?: StringWithAggregatesFilter<"ScheduledEmail"> | string
     body?: StringWithAggregatesFilter<"ScheduledEmail"> | string
+    attachments?: StringNullableWithAggregatesFilter<"ScheduledEmail"> | string | null
     scheduledAt?: DateTimeWithAggregatesFilter<"ScheduledEmail"> | Date | string
     status?: StringWithAggregatesFilter<"ScheduledEmail"> | string
     sentAt?: DateTimeNullableWithAggregatesFilter<"ScheduledEmail"> | Date | string | null
@@ -4473,6 +4545,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     emails?: ScheduledEmailCreateNestedManyWithoutUserInput
@@ -4485,6 +4560,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     emails?: ScheduledEmailUncheckedCreateNestedManyWithoutUserInput
@@ -4497,6 +4575,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     emails?: ScheduledEmailUpdateManyWithoutUserNestedInput
@@ -4509,6 +4590,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     emails?: ScheduledEmailUncheckedUpdateManyWithoutUserNestedInput
@@ -4521,6 +4605,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4531,6 +4618,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4541,6 +4631,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4640,6 +4733,7 @@ export namespace Prisma {
     recipients: string
     subject: string
     body: string
+    attachments?: string | null
     scheduledAt: Date | string
     status?: string
     sentAt?: Date | string | null
@@ -4656,6 +4750,7 @@ export namespace Prisma {
     recipients: string
     subject: string
     body: string
+    attachments?: string | null
     scheduledAt: Date | string
     status?: string
     sentAt?: Date | string | null
@@ -4670,6 +4765,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4686,6 +4782,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4701,6 +4798,7 @@ export namespace Prisma {
     recipients: string
     subject: string
     body: string
+    attachments?: string | null
     scheduledAt: Date | string
     status?: string
     sentAt?: Date | string | null
@@ -4715,6 +4813,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4730,6 +4829,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4765,6 +4865,17 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type DateTimeFilter<$PrismaModel = never> = {
@@ -4804,6 +4915,9 @@ export namespace Prisma {
     password?: SortOrder
     name?: SortOrder
     role?: SortOrder
+    googleAccessToken?: SortOrder
+    googleRefreshToken?: SortOrder
+    googleTokenExpiry?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4814,6 +4928,9 @@ export namespace Prisma {
     password?: SortOrder
     name?: SortOrder
     role?: SortOrder
+    googleAccessToken?: SortOrder
+    googleRefreshToken?: SortOrder
+    googleTokenExpiry?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4824,6 +4941,9 @@ export namespace Prisma {
     password?: SortOrder
     name?: SortOrder
     role?: SortOrder
+    googleAccessToken?: SortOrder
+    googleRefreshToken?: SortOrder
+    googleTokenExpiry?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4860,6 +4980,20 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -4968,23 +5102,13 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type ScheduledEmailCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
     recipients?: SortOrder
     subject?: SortOrder
     body?: SortOrder
+    attachments?: SortOrder
     scheduledAt?: SortOrder
     status?: SortOrder
     sentAt?: SortOrder
@@ -5004,6 +5128,7 @@ export namespace Prisma {
     recipients?: SortOrder
     subject?: SortOrder
     body?: SortOrder
+    attachments?: SortOrder
     scheduledAt?: SortOrder
     status?: SortOrder
     sentAt?: SortOrder
@@ -5019,6 +5144,7 @@ export namespace Prisma {
     recipients?: SortOrder
     subject?: SortOrder
     body?: SortOrder
+    attachments?: SortOrder
     scheduledAt?: SortOrder
     status?: SortOrder
     sentAt?: SortOrder
@@ -5030,20 +5156,6 @@ export namespace Prisma {
 
   export type ScheduledEmailSumOrderByAggregateInput = {
     recipientCount?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ScheduledEmailCreateNestedManyWithoutUserInput = {
@@ -5078,6 +5190,10 @@ export namespace Prisma {
 
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -5164,10 +5280,6 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type UserUpdateOneRequiredWithoutEmailsNestedInput = {
     create?: XOR<UserCreateWithoutEmailsInput, UserUncheckedCreateWithoutEmailsInput>
     connectOrCreate?: UserCreateOrConnectWithoutEmailsInput
@@ -5202,6 +5314,17 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -5271,6 +5394,20 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -5325,36 +5462,12 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
   export type ScheduledEmailCreateWithoutUserInput = {
     id?: string
     recipients: string
     subject: string
     body: string
+    attachments?: string | null
     scheduledAt: Date | string
     status?: string
     sentAt?: Date | string | null
@@ -5369,6 +5482,7 @@ export namespace Prisma {
     recipients: string
     subject: string
     body: string
+    attachments?: string | null
     scheduledAt: Date | string
     status?: string
     sentAt?: Date | string | null
@@ -5441,6 +5555,7 @@ export namespace Prisma {
     recipients?: StringFilter<"ScheduledEmail"> | string
     subject?: StringFilter<"ScheduledEmail"> | string
     body?: StringFilter<"ScheduledEmail"> | string
+    attachments?: StringNullableFilter<"ScheduledEmail"> | string | null
     scheduledAt?: DateTimeFilter<"ScheduledEmail"> | Date | string
     status?: StringFilter<"ScheduledEmail"> | string
     sentAt?: DateTimeNullableFilter<"ScheduledEmail"> | Date | string | null
@@ -5491,6 +5606,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     emails?: ScheduledEmailCreateNestedManyWithoutUserInput
@@ -5502,6 +5620,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     emails?: ScheduledEmailUncheckedCreateNestedManyWithoutUserInput
@@ -5529,6 +5650,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     emails?: ScheduledEmailUpdateManyWithoutUserNestedInput
@@ -5540,6 +5664,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     emails?: ScheduledEmailUncheckedUpdateManyWithoutUserNestedInput
@@ -5551,6 +5678,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     smtpConfig?: SmtpConfigCreateNestedOneWithoutUserInput
@@ -5562,6 +5692,9 @@ export namespace Prisma {
     password: string
     name?: string | null
     role?: string
+    googleAccessToken?: string | null
+    googleRefreshToken?: string | null
+    googleTokenExpiry?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     smtpConfig?: SmtpConfigUncheckedCreateNestedOneWithoutUserInput
@@ -5589,6 +5722,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     smtpConfig?: SmtpConfigUpdateOneWithoutUserNestedInput
@@ -5600,6 +5736,9 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    googleAccessToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    googleTokenExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     smtpConfig?: SmtpConfigUncheckedUpdateOneWithoutUserNestedInput
@@ -5610,6 +5749,7 @@ export namespace Prisma {
     recipients: string
     subject: string
     body: string
+    attachments?: string | null
     scheduledAt: Date | string
     status?: string
     sentAt?: Date | string | null
@@ -5624,6 +5764,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5638,6 +5779,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5652,6 +5794,7 @@ export namespace Prisma {
     recipients?: StringFieldUpdateOperationsInput | string
     subject?: StringFieldUpdateOperationsInput | string
     body?: StringFieldUpdateOperationsInput | string
+    attachments?: NullableStringFieldUpdateOperationsInput | string | null
     scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: StringFieldUpdateOperationsInput | string
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

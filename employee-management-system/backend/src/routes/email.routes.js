@@ -8,7 +8,8 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/schedule', ctrl.scheduleEmail);
-router.get('/', ctrl.getEmails);
+router.post('/system-email', ctrl.sendSystemEmail);
+router.get(['/', ''], ctrl.getEmails);
 router.get('/stats', ctrl.getStats);
 router.post('/:id/send-now', ctrl.sendNow);
 router.delete('/:id', ctrl.deleteEmail);

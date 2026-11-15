@@ -30,12 +30,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting: 150 requests per 15 minutes per IP
+// Rate limiting: Bypassed in development/testing; generous in production (1,500 req/15 min)
+const isDev = process.env.NODE_ENV !== 'production';
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 150,
+  max: isDev ? 10000 : 1500,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isDev,
   message: { success: false, message: 'Too many requests, please try again later.' },
 }));
 
@@ -66,7 +68,12 @@ const frontendDist = path.join(__dirname, '../../frontend/dist');
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
   app.get('*', (req, res, next) => {
-    if (req.originalUrl.startsWith('/api')) {
+    if (
+      req.originalUrl.startsWith('/api') ||
+      req.originalUrl.startsWith('/auth') ||
+      req.originalUrl.startsWith('/emails') ||
+      req.originalUrl.startsWith('/health')
+    ) {
       return next();
     }
     res.sendFile(path.join(frontendDist, 'index.html'));

@@ -36,6 +36,23 @@ export const StatusBadge = ({ status }) => {
   }
 };
 
+export const EmailStatusBadge = ({ status }) => {
+  switch (status) {
+    case 'SENT':
+      return <Badge variant="green">Delivered</Badge>;
+    case 'SCHEDULED':
+      return <Badge variant="yellow">Scheduled</Badge>;
+    case 'SENDING':
+      return <Badge variant="blue">Sending...</Badge>;
+    case 'FAILED':
+      return <Badge variant="red">Failed</Badge>;
+    case 'CANCELLED':
+      return <Badge variant="gray">Cancelled</Badge>;
+    default:
+      return <Badge variant="gray">{status}</Badge>;
+  }
+};
+
 export const RatingBadge = ({ rating }) => {
   switch (rating) {
     case 'EXCELLENT':

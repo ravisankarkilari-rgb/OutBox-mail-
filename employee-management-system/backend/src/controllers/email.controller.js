@@ -4,9 +4,15 @@ const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
 
 const scheduleEmail = async (req, res, next) => {
   try {
-    const { recipients, subject, body, scheduledAt } = req.body;
-    if (!recipients || !subject || !body || !scheduledAt) {
-      return sendError(res, 'Recipients, subject, message body, and scheduled time are required', 400);
+    let { recipients, subject, body, scheduledAt, attachments } = req.body;
+
+    // Login Email as Primary Email: If recipients is not specified or set to "ME", dynamically default to the authenticated user's registered email
+    if (!recipients || (typeof recipients === 'string' && (recipients.trim() === '' || recipients.trim().toUpperCase() === 'ME'))) {
+      recipients = req.user.email;
+    }
+
+    if (!subject || !body || !scheduledAt) {
+      return sendError(res, 'Subject, message body, and scheduled time are required', 400);
     }
 
     const email = await schedulerService.scheduleEmail(req.user.id, {
@@ -14,9 +20,27 @@ const scheduleEmail = async (req, res, next) => {
       subject,
       body,
       scheduledAt,
+      attachments,
     });
 
     return sendSuccess(res, email, 'Email scheduled successfully!', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const sendSystemEmail = async (req, res, next) => {
+  try {
+    const { subject, body, attachments } = req.body;
+
+    // Dynamic Recipient: Always dynamically send to the authenticated user's registered login email address
+    const result = await schedulerService.sendSystemEmailToUser(req.user.id, {
+      subject: subject || 'Outbox Mail System Alert',
+      body: body || `<p>Hello ${req.user.name || req.user.email},</p><p>This email was dynamically sent to your verified registered login email address (<strong>${req.user.email}</strong>).</p>`,
+      attachments,
+    });
+
+    return sendSuccess(res, result, `Email dynamically dispatched to your login address (${req.user.email})`);
   } catch (err) {
     next(err);
   }
@@ -79,6 +103,7 @@ const saveSmtp = async (req, res, next) => {
 
 module.exports = {
   scheduleEmail,
+  sendSystemEmail,
   getEmails,
   sendNow,
   deleteEmail,
