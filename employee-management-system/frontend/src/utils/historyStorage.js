@@ -67,3 +67,4 @@ export const saveEmailToHistory = (item, userEmail) => {
   persistHistory(updated, userEmail);
   return updated;
 };
+

@@ -31,14 +31,14 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage = () => {
+  const { user, updateUserState } = useAuth();
+  const { showToast } = useToast();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedFeature, setSelectedFeature] = useState('ALL'); // Default to ALL campaigns
   const [featureEmails, setFeatureEmails] = useState(() => getSavedHistory(user?.email));
   const [featureLoading, setFeatureLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const { user, updateUserState } = useAuth();
   const [connectingGmail, setConnectingGmail] = useState(false);
 
   const handleConnectGmail = () => {
@@ -90,8 +90,6 @@ export const DashboardPage = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
-
-  const { showToast } = useToast();
   const resultsRef = useRef(null);
 
 
