@@ -23,7 +23,21 @@ const scheduleEmail = async (req, res, next) => {
       attachments,
     });
 
-    return sendSuccess(res, email, 'Email scheduled successfully!', 201);
+    // If scheduled for <= 2 minutes from now or on serverless (Vercel), dispatch immediately
+    const scheduledTime = new Date(scheduledAt).getTime();
+    const isImminent = scheduledTime <= Date.now() + 120000;
+    if (isImminent || process.env.VERCEL) {
+      try {
+        const fullItem = await schedulerService.getEmailById(req.user.id, email.id);
+        if (fullItem) {
+          await schedulerService.dispatchEmail(fullItem);
+        }
+      } catch (dispErr) {
+        console.warn('Immediate dispatch notice:', dispErr.message);
+      }
+    }
+
+    return sendSuccess(res, email, 'Email scheduled & dispatched successfully!', 201);
   } catch (err) {
     next(err);
   }

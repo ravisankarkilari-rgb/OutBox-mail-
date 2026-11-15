@@ -461,19 +461,36 @@ export const ComposePage = () => {
           </div>
         </Card>
 
-        {/* Action Button */}
-        <div className="flex justify-end pt-2">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
           <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              setPresetTime(0);
+              setTimeout(() => {
+                const btn = document.getElementById('main-schedule-submit-btn');
+                if (btn) btn.click();
+              }, 50);
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl shadow-lg shadow-emerald-600/20 transition disabled:opacity-50"
+          >
+            <Send className="w-5 h-5" />
+            <span>{loading ? 'Sending Live...' : '⚡ Send Live Now'}</span>
+          </button>
+
+          <button
+            id="main-schedule-submit-btn"
             type="submit"
             disabled={loading}
-            className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-sky-600/20 transition disabled:opacity-50"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-sky-600/20 transition disabled:opacity-50"
           >
             <Clock className="w-5 h-5" />
             <span>
               {loading
-                ? 'Scheduling...'
+                ? 'Processing...'
                 : attachments.length > 0
-                ? `Schedule Send (${attachments.length} attachment${attachments.length === 1 ? '' : 's'})`
+                ? `Schedule Send (${attachments.length} file${attachments.length === 1 ? '' : 's'})`
                 : 'Schedule Automated Send'}
             </span>
           </button>
