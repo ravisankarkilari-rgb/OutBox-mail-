@@ -25,13 +25,49 @@ import {
 } from 'lucide-react';
 
 export const ComposePage = () => {
-  const { user } = useAuth();
+  const { user, connectGoogle } = useAuth();
   const [recipients, setRecipients] = useState(user?.email || '');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+
+  const GOOGLE_CLIENT_ID_DEFAULT = '896070974157-k5hkgaavkpc7d48thlum85cr4rlv4ujg.apps.googleusercontent.com';
+  const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_DEFAULT).replace(/['"]/g, '').trim();
+
+  const handleConnectGmail = () => {
+    if (clientId && window.google?.accounts?.oauth2) {
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              showToast(tokenResponse.error_description || tokenResponse.error || 'Google authorization cancelled', 'error');
+              return;
+            }
+            setConnecting(true);
+            try {
+              await connectGoogle({
+                accessToken: tokenResponse.access_token,
+                expiresIn: tokenResponse.expires_in,
+              });
+              showToast(`Connected! Sending directly from ${user?.email}`, 'success');
+            } catch (err) {
+              showToast(err.response?.data?.message || err.message || 'Failed to connect Google account', 'error');
+            } finally {
+              setConnecting(false);
+            }
+          },
+        });
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      } catch (err) {
+        showToast('Google OAuth error: ' + err.message, 'error');
+      }
+    }
+  };
 
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -274,6 +310,34 @@ export const ComposePage = () => {
       </div>
 
       <form onSubmit={handleScheduleSubmit} className="space-y-6">
+        {/* Sender Identity Card */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-xl ${user?.googleAccessToken ? 'bg-emerald-50 text-emerald-600' : 'bg-sky-50 text-sky-600'}`}>
+              <Send className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-medium">Sending Directly From (Your Login Address):</p>
+              <p className="text-sm font-semibold text-slate-800">{user?.email}</p>
+            </div>
+          </div>
+          {user?.googleAccessToken ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Direct Personal Gmail Sending Active</span>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectGmail}
+              disabled={connecting}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition shadow-sm disabled:opacity-50"
+            >
+              <span>{connecting ? 'Connecting...' : 'Authorize Direct Gmail (0 Passwords)'}</span>
+            </button>
+          )}
+        </div>
+
         {/* Recipients Card */}
         <Card
           title="Recipients"
