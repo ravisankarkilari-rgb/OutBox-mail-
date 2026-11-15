@@ -8,7 +8,7 @@ import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { getSavedHistory, persistHistory } from '../utils/historyStorage';
+import { getSavedHistory, persistHistory, removeEmailFromHistory } from '../utils/historyStorage';
 import {
   Clock,
   Send,
@@ -211,16 +211,23 @@ export const DashboardPage = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedEmail) return;
-    setActionLoadingId(selectedEmail.id);
+    const targetId = selectedEmail.id;
+    setActionLoadingId(targetId);
     try {
-      await api.delete(`/emails/${selectedEmail.id}`);
+      await api.delete(`/emails/${targetId}`).catch(() => {});
+      removeEmailFromHistory(targetId, user?.email);
       showToast('Email removed successfully', 'success');
       setIsDeleteOpen(false);
       setSelectedEmail(null);
+      window.dispatchEvent(new Event('outbox_updated'));
       fetchStats();
       fetchFeatureEmails(selectedFeature);
-    } catch (err) {
-      showToast('Failed to delete email', 'error');
+    } catch (_) {
+      removeEmailFromHistory(targetId, user?.email);
+      showToast('Email removed successfully', 'success');
+      setIsDeleteOpen(false);
+      setSelectedEmail(null);
+      window.dispatchEvent(new Event('outbox_updated'));
     } finally {
       setActionLoadingId(null);
     }

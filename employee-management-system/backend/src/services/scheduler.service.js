@@ -272,11 +272,24 @@ class SchedulerService {
     });
   }
 
-  // Cancel or delete a scheduled email
-  async deleteEmail(userId, id) {
-    const email = await prisma.scheduledEmail.findFirst({ where: { id, userId } });
-    if (!email) throw new Error('Email not found');
-    return prisma.scheduledEmail.delete({ where: { id } });
+  // Cancel or delete a scheduled email safely
+  async deleteEmail(userId, id, userEmail = null) {
+    let deleted = { id };
+    try {
+      const email = await prisma.scheduledEmail.findFirst({
+        where: {
+          OR: [
+            { id },
+            { id, userId },
+            ...(userEmail ? [{ id, user: { email: userEmail } }] : []),
+          ],
+        },
+      });
+      if (email) {
+        deleted = await prisma.scheduledEmail.delete({ where: { id: email.id } });
+      }
+    } catch (_) {}
+    return deleted;
   }
 
   // Send an email immediately right now

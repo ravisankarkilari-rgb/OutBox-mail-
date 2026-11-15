@@ -114,3 +114,10 @@ export const saveEmailToHistory = (item, userEmail, replaceId = null) => {
   return updated;
 };
 
+export const removeEmailFromHistory = (id, userEmail) => {
+  const current = getSavedHistory(userEmail);
+  const remaining = current.filter((e) => e.id !== id);
+  persistHistory(remaining, userEmail);
+  return remaining;
+};
+

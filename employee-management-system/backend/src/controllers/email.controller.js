@@ -105,7 +105,7 @@ const sendNow = async (req, res, next) => {
 
 const deleteEmail = async (req, res, next) => {
   try {
-    await schedulerService.deleteEmail(req.user.id, req.params.id);
+    await schedulerService.deleteEmail(req.user.id, req.params.id, req.user?.email);
     return sendSuccess(res, null, 'Scheduled email removed');
   } catch (err) {
     next(err);

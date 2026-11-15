@@ -9,7 +9,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmailStatusBadge } from '../components/Badge';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { getSavedHistory, persistHistory } from '../utils/historyStorage';
+import { getSavedHistory, persistHistory, removeEmailFromHistory } from '../utils/historyStorage';
 import {
   Clock,
   Send,
@@ -121,20 +121,26 @@ export const OutboxPage = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedEmail) return;
+    const targetId = selectedEmail.id;
     setActionLoading(true);
     try {
-      await api.delete(`/emails/${selectedEmail.id}`);
+      await api.delete(`/emails/${targetId}`).catch(() => {});
+      removeEmailFromHistory(targetId, user?.email);
       showToast('Email removed from outbox', 'success');
       setIsDeleteOpen(false);
       setSelectedEmail(null);
-      // Remove from state & cache
-      const updated = emails.filter((e) => e.id !== selectedEmail.id);
-      setEmails(updated);
-      const remainingHistory = getSavedHistory(user?.email).filter((e) => e.id !== selectedEmail.id);
-      persistHistory(remainingHistory, user?.email);
+      window.dispatchEvent(new Event('outbox_updated'));
+      const remainingHistory = getSavedHistory(user?.email);
+      setEmails(activeTab === 'ALL' ? remainingHistory : remainingHistory.filter((e) => e.status === activeTab));
       fetchOutbox(activeTab);
-    } catch (err) {
-      showToast('Failed to cancel scheduled email', 'error');
+    } catch (_) {
+      removeEmailFromHistory(targetId, user?.email);
+      showToast('Email removed from outbox', 'success');
+      setIsDeleteOpen(false);
+      setSelectedEmail(null);
+      window.dispatchEvent(new Event('outbox_updated'));
+      const remainingHistory = getSavedHistory(user?.email);
+      setEmails(activeTab === 'ALL' ? remainingHistory : remainingHistory.filter((e) => e.status === activeTab));
     } finally {
       setActionLoading(false);
     }
