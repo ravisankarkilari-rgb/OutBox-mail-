@@ -62,6 +62,11 @@ const sendSystemEmail = async (req, res, next) => {
 
 const getEmails = async (req, res, next) => {
   try {
+    // On serverless environments, process pending emails whose scheduled time has arrived
+    try {
+      await schedulerService.processPendingEmails();
+    } catch (_) {}
+
     const { emails, pagination } = await schedulerService.getEmails(req.user.id, req.query);
     return sendPaginated(res, emails, pagination, 'Emails fetched');
   } catch (err) {
@@ -89,6 +94,10 @@ const deleteEmail = async (req, res, next) => {
 
 const getStats = async (req, res, next) => {
   try {
+    try {
+      await schedulerService.processPendingEmails();
+    } catch (_) {}
+
     const stats = await schedulerService.getDashboardStats(req.user.id);
     return sendSuccess(res, stats, 'Outbox stats fetched');
   } catch (err) {
