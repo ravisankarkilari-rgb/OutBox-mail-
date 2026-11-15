@@ -2,31 +2,40 @@
 
 A full-stack, production-ready **Email Scheduling & Outbox Automation System** built with **React, Vite, Tailwind CSS, Node.js, Express, SQLite, and Prisma ORM**.
 
-## 🚀 Free 1-Click Deployment on Render.com
+---
 
-Deploy both the **Frontend** and **Backend** together on Render's 100% free tier:
+## 🚀 Free Cloud Deployment on Vercel (100% Free, Zero Credit Card)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ravisankarkilari-rgb/OutBox-mail-)
+Deploy the application to Vercel's global CDN in 3 clicks with **zero credit card required** and **zero personal IP exposure**:
 
-### Or Manual Setup on Render (2 Minutes, 100% Free):
-1. Go to **[dashboard.render.com](https://dashboard.render.com/)** and sign in with GitHub.
-2. Click **New + > Web Service**.
-3. Select your repository: `ravisankarkilari-rgb/OutBox-mail-`.
-4. Fill in these settings:
-   - **Root Directory**: `employee-management-system`
-   - **Build Command**: `npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && cd backend && npx prisma generate && npx prisma db push`
-   - **Start Command**: `node backend/src/server.js`
-   - **Instance Type**: **Free**
-5. Under **Environment Variables**, add:
-   - `NODE_ENV` = `production`
-   - `PORT` = `10000`
-   - `DATABASE_URL` = `file:./dev.db`
-   - `JWT_SECRET` = `outbox-jwt-secret-key-2026`
-   - `JWT_REFRESH_SECRET` = `outbox-refresh-secret-key-2026`
-   - `ADMIN_EMAIL` = `admin@company.com`
-   - `ADMIN_PASSWORD` = `Admin@123`
-6. Click **Deploy Web Service**!
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ravisankarkilari-rgb/OutBox-mail-)
 
-Render will build and give you a free permanent HTTPS URL:
-`https://outbox-mail-xxxx.onrender.com`
+### Step-by-Step Vercel Setup:
+1. Go to **[vercel.com/signup](https://vercel.com/signup)** and sign in with GitHub.
+2. Click **"Add New..." > "Project"**.
+3. Import your repository: **`ravisankarkilari-rgb/OutBox-mail-`**.
+4. Set **Root Directory** to: `employee-management-system/frontend`.
+5. Click **Deploy**!
 
+In ~1 minute, your live secure URL is ready:
+👉 `https://outbox-mail.vercel.app`
+
+---
+
+## 💻 Local Development
+
+### Backend
+```powershell
+cd "employee-management-system/backend"
+npm run dev
+```
+
+### Frontend
+```powershell
+cd "employee-management-system/frontend"
+npm run dev
+```
+
+### Demo Credentials
+- **Email**: `admin@company.com`
+- **Password**: `Admin@123`

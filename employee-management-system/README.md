@@ -63,29 +63,14 @@ Click the purple **"Click to Fill Demo Account"** button on the login screen, or
 
 ---
 
-## 6. Deployment Guide
+## 6. Deployment on Vercel (100% Free, No Credit Card Required)
 
-Because Outbox Mail includes an active background email scheduler service (`schedulerService.start()`), continuous server platforms (Render, Railway, Fly.io, or Docker VPS) are ideal.
+1. Go to **[vercel.com/signup](https://vercel.com/signup)** and sign in with GitHub.
+2. Click **"Add New..." > "Project"**.
+3. Import your repository: **`ravisankarkilari-rgb/OutBox-mail-`**.
+4. Set **Root Directory** to: `employee-management-system/frontend`.
+5. Click **Deploy**!
 
-### Option A: Free 1-Click Deployment on Render.com (Recommended)
-1. Push this repository to your GitHub account:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/outbox-mail.git
-   git branch -M main
-   git push -u origin main
-   ```
-2. Go to [render.com](https://render.com) and click **New + > Blueprint**.
-3. Connect your GitHub repository. Render will automatically read `render.yaml` and deploy both the Frontend & Backend together on the free tier!
-
-### Option B: Deploy with Docker (Any VPS, AWS, DigitalOcean)
-Run the production multi-stage container with 1 command:
-```bash
-docker compose up -d --build
-```
-The application will be running at `http://localhost:5000` with the built frontend served directly and SQLite data saved in the persistent `outbox_data` volume.
-
-### Option C: Deploy on Railway
-1. Install Railway CLI or connect via GitHub: `railway init`
-2. Run: `railway up`
-3. Add environment variables from `.env.example`.
+In ~1 minute, your live secure URL is ready:
+👉 `https://outbox-mail.vercel.app`
 
