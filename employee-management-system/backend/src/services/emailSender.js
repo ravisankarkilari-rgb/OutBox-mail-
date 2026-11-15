@@ -65,20 +65,10 @@ class EmailSender {
       }
     }
 
-    // Fallback: Simulation Mode when no SMTP credentials have been entered yet
-    console.log(`\n⚠️  [SIMULATION MODE - NO SMTP CREDENTIALS ENTERED]`);
-    console.log(`   To send actual live emails to inboxes, enter your Gmail address and App Password in "SMTP Settings".`);
-    console.log(`   To: ${to}`);
-    console.log(`   Subject: ${subject}`);
-    console.log(`   Delivered At: ${new Date().toISOString()}`);
-    console.log(`   Preview: ${body.substring(0, 100)}...\n`);
-
-    return {
-      success: true,
-      mode: 'SIMULATION',
-      note: 'Simulated delivery. Configure your SMTP Settings in the app to send live emails to inboxes.',
-      deliveredAt: new Date(),
-    };
+    // When no SMTP credentials are configured, fail with a clear, actionable error
+    console.error(`\n❌ [EMAIL DELIVERY BLOCKED - NO CREDENTIALS CONFIGURED]`);
+    console.error(`   To send actual live emails to real inboxes, please sign in with Google (Direct Gmail API) or configure your SMTP Settings.\n`);
+    throw new Error('Email delivery blocked: No sending credentials configured. Please sign in with Google to send directly from your personal Gmail with zero passwords, or configure SMTP in Settings.');
   }
 
   async sendViaSmtp({ host, port, user, pass, from, replyTo, to, subject, body, attachments = null }) {
