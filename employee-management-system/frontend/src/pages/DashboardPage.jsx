@@ -173,11 +173,19 @@ export const DashboardPage = () => {
   useEffect(() => {
     fetchStats();
     fetchFeatureEmails(selectedFeature);
+    const handleUpdate = () => {
+      fetchStats();
+      fetchFeatureEmails(selectedFeature);
+    };
+    window.addEventListener('outbox_updated', handleUpdate);
     const interval = setInterval(() => {
       fetchStats();
       fetchFeatureEmails(selectedFeature);
     }, 15000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('outbox_updated', handleUpdate);
+    };
   }, [selectedFeature, fetchFeatureEmails]);
 
   const handleCardClick = (statusKey) => {

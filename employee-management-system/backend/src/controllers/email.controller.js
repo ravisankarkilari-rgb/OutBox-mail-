@@ -95,7 +95,8 @@ const sendNow = async (req, res, next) => {
     if (finalGoogleToken && req.user) {
       req.user.googleAccessToken = finalGoogleToken;
     }
-    const email = await schedulerService.sendNow(req.user.id, req.params.id, req.user);
+    const fallbackData = req.body?.emailData || req.body;
+    const email = await schedulerService.sendNow(req.user.id, req.params.id, req.user, fallbackData);
     return sendSuccess(res, email, 'Email dispatched immediately');
   } catch (err) {
     next(err);

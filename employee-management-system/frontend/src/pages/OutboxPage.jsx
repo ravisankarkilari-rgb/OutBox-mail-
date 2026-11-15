@@ -82,9 +82,14 @@ export const OutboxPage = () => {
 
   useEffect(() => {
     fetchOutbox(activeTab);
+    const handleUpdate = () => fetchOutbox(activeTab);
+    window.addEventListener('outbox_updated', handleUpdate);
     // Auto-refresh every 15 seconds to catch live status changes
     const timer = setInterval(() => fetchOutbox(activeTab), 15000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('outbox_updated', handleUpdate);
+    };
   }, [fetchOutbox, activeTab]);
 
   const handleTabChange = (newTab) => {

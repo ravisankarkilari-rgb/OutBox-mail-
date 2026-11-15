@@ -280,17 +280,35 @@ class SchedulerService {
   }
 
   // Send an email immediately right now
-  async sendNow(userId, id, currentUser = null) {
-    const email = await prisma.scheduledEmail.findFirst({
-      where: { id, userId },
+  async sendNow(userId, id, currentUser = null, fallbackData = null) {
+    let email = await prisma.scheduledEmail.findFirst({
+      where: {
+        OR: [{ id }, { id, userId }],
+      },
       include: { user: { include: { smtpConfig: true } } },
     });
+
+    if (!email && fallbackData && fallbackData.subject && fallbackData.recipients) {
+      try {
+        email = await this.scheduleEmail(userId, {
+          recipients: fallbackData.recipients,
+          subject: fallbackData.subject,
+          body: fallbackData.body || '',
+          scheduledAt: fallbackData.scheduledAt || new Date(),
+          attachments: fallbackData.attachments,
+        });
+        email = await this.getEmailById(userId, email.id);
+      } catch (e) {
+        console.warn('Fallback email restoration note:', e.message);
+      }
+    }
+
     if (!email) throw new Error('Email not found');
     if (currentUser?.googleAccessToken && !email.user?.googleAccessToken) {
       email.user = { ...email.user, googleAccessToken: currentUser.googleAccessToken };
     }
     await this.dispatchEmail(email);
-    return prisma.scheduledEmail.findUnique({ where: { id } });
+    return prisma.scheduledEmail.findUnique({ where: { id: email.id } }) || email;
   }
 
   // Summary metrics for user dashboard
