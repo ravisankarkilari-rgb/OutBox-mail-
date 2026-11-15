@@ -21,3 +21,4 @@ services:
         value: admin@company.com
       - key: ADMIN_PASSWORD
         value: Admin@123
+
