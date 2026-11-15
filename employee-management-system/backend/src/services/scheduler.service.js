@@ -294,22 +294,26 @@ class SchedulerService {
   }
 
   // Summary metrics for user dashboard
-  async getDashboardStats(userId) {
+  async getDashboardStats(userId, userEmail = null) {
+    const userFilter = userEmail
+      ? { OR: [{ userId }, { user: { email: userEmail } }] }
+      : { userId };
+
     const [total, scheduled, sent, failed] = await Promise.all([
-      prisma.scheduledEmail.count({ where: { userId } }),
-      prisma.scheduledEmail.count({ where: { userId, status: 'SCHEDULED' } }),
-      prisma.scheduledEmail.count({ where: { userId, status: 'SENT' } }),
-      prisma.scheduledEmail.count({ where: { userId, status: 'FAILED' } }),
+      prisma.scheduledEmail.count({ where: userFilter }),
+      prisma.scheduledEmail.count({ where: { ...userFilter, status: 'SCHEDULED' } }),
+      prisma.scheduledEmail.count({ where: { ...userFilter, status: 'SENT' } }),
+      prisma.scheduledEmail.count({ where: { ...userFilter, status: 'FAILED' } }),
     ]);
 
     const upcoming = await prisma.scheduledEmail.findMany({
-      where: { userId, status: 'SCHEDULED' },
+      where: { ...userFilter, status: 'SCHEDULED' },
       take: 5,
       orderBy: { scheduledAt: 'asc' },
     });
 
     const recentSent = await prisma.scheduledEmail.findMany({
-      where: { userId, status: 'SENT' },
+      where: { ...userFilter, status: 'SENT' },
       take: 5,
       orderBy: { sentAt: 'desc' },
     });

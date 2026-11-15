@@ -9,6 +9,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmailStatusBadge } from '../components/Badge';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { getSavedHistory, persistHistory } from '../utils/historyStorage';
 import {
   Clock,
   Send,
@@ -23,93 +24,6 @@ import {
   Inbox,
   Filter,
 } from 'lucide-react';
-
-// Helper to retrieve and merge all outbox history from all localStorage keys and default history
-const getSavedHistory = (userEmail) => {
-  const mergedMap = new Map();
-
-  // Initial seed from previous activity so history is never blank
-  const defaultSeeds = [
-    {
-      id: 'email_history_seed_1',
-      subject: 'HI',
-      body: 'How r u',
-      recipients: userEmail || 'satyamkilari20@gmail.com, ravisankarkilari@gmail.com',
-      recipientCount: 3,
-      scheduledAt: new Date(Date.now() - 3600000).toISOString(),
-      sentAt: new Date(Date.now() - 3590000).toISOString(),
-      status: 'SENT',
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 'email_history_seed_2',
-      subject: 'HI',
-      body: 'HLOO',
-      recipients: userEmail || 'satyamkilari20@gmail.com, ravisankarkilari@gmail.com',
-      recipientCount: 2,
-      scheduledAt: new Date(Date.now() - 1800000).toISOString(),
-      sentAt: new Date(Date.now() - 1790000).toISOString(),
-      status: 'SENT',
-      createdAt: new Date(Date.now() - 1800000).toISOString(),
-    },
-  ];
-
-  defaultSeeds.forEach((s) => mergedMap.set(s.id, s));
-
-  // Check all candidate keys
-  const candidateKeys = [
-    'outbox_history_permanent',
-    'outbox_history_all',
-    'outbox_history_default',
-  ];
-  if (userEmail) {
-    candidateKeys.push(`outbox_history_${userEmail.toLowerCase()}`);
-    candidateKeys.push(`outbox_history_${userEmail}`);
-  }
-
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('outbox_history_')) {
-        candidateKeys.push(k);
-      }
-    }
-  } catch (_) {}
-
-  Array.from(new Set(candidateKeys)).forEach((k) => {
-    try {
-      const raw = localStorage.getItem(k);
-      if (raw) {
-        const list = JSON.parse(raw);
-        if (Array.isArray(list)) {
-          list.forEach((item) => {
-            if (item && item.id) {
-              mergedMap.set(item.id, item);
-            }
-          });
-        }
-      }
-    } catch (_) {}
-  });
-
-  return Array.from(mergedMap.values()).sort(
-    (a, b) => new Date(b.scheduledAt || b.createdAt) - new Date(a.scheduledAt || a.createdAt)
-  );
-};
-
-const persistHistory = (list, userEmail) => {
-  const keys = ['outbox_history_permanent', 'outbox_history_all', 'outbox_history_default'];
-  if (userEmail) {
-    keys.push(`outbox_history_${userEmail.toLowerCase()}`);
-    keys.push(`outbox_history_${userEmail}`);
-  }
-  const cleanList = list.slice(0, 100);
-  keys.forEach((k) => {
-    try {
-      localStorage.setItem(k, JSON.stringify(cleanList));
-    } catch (_) {}
-  });
-};
 
 export const OutboxPage = () => {
   const { user } = useAuth();
@@ -347,9 +261,11 @@ export const OutboxPage = () => {
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
                         {sendTime.toLocaleDateString()} at {sendTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
-                      {item.status === 'SCHEDULED' && isPast && (
-                        <span className="text-[11px] font-medium text-amber-600 block mt-0.5 animate-pulse">
-                          ⏳ Ready for dispatch
+                      {item.status === 'SCHEDULED' && (
+                        <span className="text-[11px] font-medium text-amber-600 block mt-0.5">
+                          {isPast
+                            ? '⏳ Ready for dispatch'
+                            : `⏳ Scheduled for ${sendTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                         </span>
                       )}
                       {item.status === 'SENT' && item.sentAt && (

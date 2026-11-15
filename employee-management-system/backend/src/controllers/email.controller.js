@@ -28,10 +28,11 @@ const scheduleEmail = async (req, res, next) => {
       attachments,
     });
 
-    // If scheduled for <= 2 minutes from now or on serverless (Vercel), dispatch immediately
+    // Immediate dispatch ONLY IF scheduled for right now or in the past (e.g. user clicked "Send Live Now")
+    // Future scheduled emails MUST NOT be dispatched early; they remain SCHEDULED until their time arrives
     const scheduledTime = new Date(scheduledAt).getTime();
-    const isImminent = scheduledTime <= Date.now() + 120000;
-    if (isImminent || process.env.VERCEL) {
+    const isLiveNow = scheduledTime <= Date.now() + 5000;
+    if (isLiveNow) {
       try {
         const fullItem = await schedulerService.getEmailById(req.user.id, email.id);
         if (fullItem) {
@@ -41,7 +42,7 @@ const scheduleEmail = async (req, res, next) => {
           await schedulerService.dispatchEmail(fullItem);
         }
       } catch (dispErr) {
-        console.warn('Immediate dispatch notice:', dispErr.message);
+        console.warn('Live dispatch notice:', dispErr.message);
       }
     }
 
@@ -116,7 +117,7 @@ const getStats = async (req, res, next) => {
       await schedulerService.processPendingEmails();
     } catch (_) {}
 
-    const stats = await schedulerService.getDashboardStats(req.user.id);
+    const stats = await schedulerService.getDashboardStats(req.user.id, req.user?.email);
     return sendSuccess(res, stats, 'Outbox stats fetched');
   } catch (err) {
     next(err);

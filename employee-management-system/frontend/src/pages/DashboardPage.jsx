@@ -8,6 +8,7 @@ import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { getSavedHistory, persistHistory } from '../utils/historyStorage';
 import {
   Clock,
   Send,
@@ -32,8 +33,8 @@ import {
 export const DashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedFeature, setSelectedFeature] = useState('FAILED'); // Default to FAILED or ALL
-  const [featureEmails, setFeatureEmails] = useState([]);
+  const [selectedFeature, setSelectedFeature] = useState('ALL'); // Default to ALL campaigns
+  const [featureEmails, setFeatureEmails] = useState(() => getSavedHistory(user?.email));
   const [featureLoading, setFeatureLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -98,11 +99,43 @@ export const DashboardPage = () => {
   const fetchStats = async () => {
     try {
       const res = await api.get('/emails/stats');
-      if (res.data?.success) {
-        setStats(res.data.data);
+      const localHistory = getSavedHistory(user?.email);
+      const countScheduled = localHistory.filter((e) => e.status === 'SCHEDULED').length;
+      const countSent = localHistory.filter((e) => e.status === 'SENT').length;
+      const countFailed = localHistory.filter((e) => e.status === 'FAILED').length;
+      const countTotal = localHistory.length;
+
+      if (res.data?.success && res.data.data) {
+        const s = res.data.data;
+        setStats({
+          total: Math.max(s.total || 0, countTotal),
+          scheduled: Math.max(s.scheduled || 0, countScheduled),
+          sent: Math.max(s.sent || 0, countSent),
+          failed: Math.max(s.failed || 0, countFailed),
+          upcoming: s.upcoming && s.upcoming.length > 0 ? s.upcoming : localHistory.filter((e) => e.status === 'SCHEDULED').slice(0, 5),
+          recentSent: s.recentSent && s.recentSent.length > 0 ? s.recentSent : localHistory.filter((e) => e.status === 'SENT').slice(0, 5),
+        });
+      } else {
+        setStats({
+          total: countTotal,
+          scheduled: countScheduled,
+          sent: countSent,
+          failed: countFailed,
+          upcoming: localHistory.filter((e) => e.status === 'SCHEDULED').slice(0, 5),
+          recentSent: localHistory.filter((e) => e.status === 'SENT').slice(0, 5),
+        });
       }
     } catch (err) {
-      console.error('Failed to load stats:', err);
+      console.warn('Stats fetch notice, using persistent history:', err.message);
+      const localHistory = getSavedHistory(user?.email);
+      setStats({
+        total: localHistory.length,
+        scheduled: localHistory.filter((e) => e.status === 'SCHEDULED').length,
+        sent: localHistory.filter((e) => e.status === 'SENT').length,
+        failed: localHistory.filter((e) => e.status === 'FAILED').length,
+        upcoming: localHistory.filter((e) => e.status === 'SCHEDULED').slice(0, 5),
+        recentSent: localHistory.filter((e) => e.status === 'SENT').slice(0, 5),
+      });
     } finally {
       setLoading(false);
     }
@@ -113,20 +146,31 @@ export const DashboardPage = () => {
     try {
       const statusParam = status === 'ALL' ? '' : `status=${status}&`;
       const res = await api.get(`/emails?${statusParam}limit=100`);
-      if (res.data?.success && Array.isArray(res.data.data)) {
-        setFeatureEmails(res.data.data);
-      } else {
-        setFeatureEmails([]);
-      }
+      const fetched = res.data?.success && Array.isArray(res.data.data) ? res.data.data : [];
+
+      const localHistory = getSavedHistory(user?.email);
+      const mergedMap = new Map();
+      localHistory.forEach((e) => mergedMap.set(e.id, e));
+      fetched.forEach((e) => mergedMap.set(e.id, e));
+
+      const fullMerged = Array.from(mergedMap.values()).sort(
+        (a, b) => new Date(b.scheduledAt || b.createdAt) - new Date(a.scheduledAt || a.createdAt)
+      );
+
+      persistHistory(fullMerged, user?.email);
+
+      const filtered = status === 'ALL' ? fullMerged : fullMerged.filter((e) => e.status === status);
+      setFeatureEmails(filtered);
     } catch (err) {
       if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') return;
-      console.error('Failed to load feature emails:', err);
-      const msg = err.response?.data?.message || err.message || 'Failed to load email details';
-      showToast(msg, 'error');
+      console.warn('Feature emails fetch notice, reading from cache:', err.message);
+      const localHistory = getSavedHistory(user?.email);
+      const filtered = status === 'ALL' ? localHistory : localHistory.filter((e) => e.status === status);
+      setFeatureEmails(filtered);
     } finally {
       setFeatureLoading(false);
     }
-  }, [showToast]);
+  }, [user?.email]);
 
   useEffect(() => {
     fetchStats();
@@ -559,10 +603,10 @@ export const DashboardPage = () => {
                                 Scheduled: {new Date(email.scheduledAt).toLocaleString()}
                               </span>
                             )}
-                            {email.sentAt && (
+                            {email.status === 'SENT' && email.sentAt && (
                               <span className="flex items-center gap-1 text-emerald-600">
                                 <Check className="w-3 h-3" />
-                                Sent: {new Date(email.sentAt).toLocaleString()}
+                                Delivered: {new Date(email.sentAt).toLocaleString()}
                               </span>
                             )}
                           </div>

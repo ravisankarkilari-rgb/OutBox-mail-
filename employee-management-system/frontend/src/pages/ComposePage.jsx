@@ -5,6 +5,7 @@ import { Card } from '../components/Card';
 import { RichTextEditor } from '../components/RichTextEditor';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { saveEmailToHistory } from '../utils/historyStorage';
 import {
   Send,
   Clock,
@@ -218,6 +219,10 @@ export const ComposePage = () => {
         payload.attachments = attachments;
       }
 
+      // Immediate vs Future Schedule check (5s threshold for "Send Live Now")
+      const scheduledTime = new Date(scheduledAt).getTime();
+      const isLiveNow = scheduledTime <= Date.now() + 5000;
+
       // Immediately register in persistent history so it is NEVER lost even if connection drops
       const tempId = `mail_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const pendingItem = {
@@ -227,40 +232,19 @@ export const ComposePage = () => {
         recipients: targetRecipients,
         recipientCount: detectedEmails.length,
         scheduledAt: scheduledIso,
-        status: new Date(scheduledAt) <= new Date(Date.now() + 120000) ? 'SENT' : 'SCHEDULED',
-        sentAt: new Date().toISOString(),
+        status: isLiveNow ? 'SENT' : 'SCHEDULED',
+        sentAt: isLiveNow ? new Date().toISOString() : null,
         createdAt: new Date().toISOString(),
       };
 
-      const persistToAllKeys = (item) => {
-        const candidateKeys = [
-          'outbox_history_permanent',
-          'outbox_history_all',
-          'outbox_history_default',
-        ];
-        if (user?.email) {
-          candidateKeys.push(`outbox_history_${user.email.toLowerCase()}`);
-          candidateKeys.push(`outbox_history_${user.email}`);
-        }
-        candidateKeys.forEach((key) => {
-          try {
-            const raw = localStorage.getItem(key);
-            const list = raw ? JSON.parse(raw) : [];
-            const filtered = list.filter((e) => e.id !== item.id && e.id !== tempId);
-            const updated = [item, ...filtered].slice(0, 100);
-            localStorage.setItem(key, JSON.stringify(updated));
-          } catch (_) {}
-        });
-      };
-
-      persistToAllKeys(pendingItem);
+      saveEmailToHistory(pendingItem, user?.email);
 
       const res = await api.post('/emails/schedule', payload);
       const createdItem = res.data?.data;
 
       // Update with final server response
       if (createdItem) {
-        persistToAllKeys(createdItem);
+        saveEmailToHistory(createdItem, user?.email);
       }
 
       showToast(
