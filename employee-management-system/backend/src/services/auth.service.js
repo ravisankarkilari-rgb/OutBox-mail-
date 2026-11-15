@@ -47,7 +47,7 @@ class AuthService {
     const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').replace(/['"]/g, '').trim();
 
     if (!clientId || !clientSecret) {
-      throw new AppError('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required in backend/.env for Google OAuth exchange', 400);
+      throw new AppError('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required in Vercel Environment Variables for Google OAuth exchange', 400);
     }
 
     return new Promise((resolve, reject) => {
@@ -279,11 +279,20 @@ class AuthService {
     }
   }
 
-  async getMe(userId) {
-    const user = await prisma.user.findUnique({
+  async getMe(userId, fallbackUser = null) {
+    let user = await prisma.user.findUnique({
       where: { id: userId },
       include: { smtpConfig: true },
     });
+    if (!user && fallbackUser?.email) {
+      user = await prisma.user.findUnique({
+        where: { email: fallbackUser.email },
+        include: { smtpConfig: true },
+      });
+    }
+    if (!user && fallbackUser) {
+      return fallbackUser;
+    }
     if (!user) throw new AppError('User not found', 404);
     const { password: _, ...safeUser } = user;
     return safeUser;

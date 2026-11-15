@@ -15,7 +15,7 @@ class GmailApiService {
     const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').replace(/['"]/g, '').trim();
 
     if (!clientId || !clientSecret) {
-      throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required in backend/.env to refresh Google OAuth tokens.');
+      throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required in Vercel Environment Variables to refresh Google OAuth tokens.');
     }
 
     return new Promise((resolve, reject) => {

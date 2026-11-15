@@ -59,7 +59,7 @@ const refreshToken = async (req, res, next) => {
 
 const getMe = async (req, res, next) => {
   try {
-    const user = await authService.getMe(req.user.id);
+    const user = await authService.getMe(req.user.id, req.user);
     return sendSuccess(res, user, 'Profile fetched');
   } catch (err) {
     next(err);

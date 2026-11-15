@@ -21,8 +21,17 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('user', JSON.stringify(res.data.data));
           }
         } catch (err) {
-          console.error('Failed to restore session:', err);
-          logout();
+          console.warn('Could not refresh profile from server, using cached session:', err.message);
+          const cachedUser = localStorage.getItem('user');
+          if (cachedUser) {
+            try {
+              setUser(JSON.parse(cachedUser));
+            } catch (_) {
+              logout();
+            }
+          } else {
+            logout();
+          }
         }
       }
       setLoading(false);
