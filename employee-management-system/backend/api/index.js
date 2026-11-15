@@ -1,7 +1,19 @@
 const app = require('../src/app');
 const { connectDB } = require('../src/config/database');
 
-// Ensure database connection is initialized for serverless invocations
-connectDB().catch((err) => console.warn('DB connect error:', err));
+let isConnected = false;
+
+// Middleware ensuring DB connection and tables are ready before handling requests
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    try {
+      await connectDB();
+      isConnected = true;
+    } catch (err) {
+      console.warn('DB initialization error:', err.message);
+    }
+  }
+  next();
+});
 
 module.exports = app;

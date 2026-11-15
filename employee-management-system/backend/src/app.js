@@ -48,8 +48,8 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-// Health check
-app.get('/api/health', (req, res) => {
+// Health check (responds on both /api/health and /health)
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({
     success: true,
     message: 'Outbox Mail Scheduler API is live',
@@ -57,9 +57,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/emails', emailRoutes);
+// API Routes (mounts on both /api/* and direct /* for resilient routing)
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/emails', '/emails'], emailRoutes);
 
 // Serve frontend build in production / single-service deployment
 const frontendDist = path.join(__dirname, '../../frontend/dist');

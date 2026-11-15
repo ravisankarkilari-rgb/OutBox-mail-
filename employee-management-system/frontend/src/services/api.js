@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// Normalize base URL so trailing slashes or missing /api never cause 404s
+let rawUrl = (import.meta.env.VITE_API_URL || '/api').trim().replace(/\/+$/, '');
+if (!rawUrl.endsWith('/api') && rawUrl.startsWith('http')) {
+  rawUrl += '/api';
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: rawUrl,
   headers: {
     'Content-Type': 'application/json',
   },
