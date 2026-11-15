@@ -11,7 +11,8 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
   const [googleEmail, setGoogleEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').replace(/['"]/g, '').trim();
+  const GOOGLE_CLIENT_ID_DEFAULT = '896070974157-k5hkgaavkpc7d48thlum85cr4rlv4ujg.apps.googleusercontent.com';
+  const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_DEFAULT).replace(/['"]/g, '').trim();
 
   const handleGoogleOAuthClick = () => {
     if (clientId && window.google?.accounts?.oauth2) {
@@ -63,7 +64,7 @@ export const GoogleSignInButton = ({ text = 'Continue with Google' }) => {
       setShowPrompt(false);
       navigate('/dashboard');
     } catch (err) {
-      showToast(err.message || 'Google sign-in failed', 'error');
+      showToast(err.response?.data?.message || err.message || 'Google sign-in failed', 'error');
     } finally {
       setLoading(false);
     }

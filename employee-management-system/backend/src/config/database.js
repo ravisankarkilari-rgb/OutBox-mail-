@@ -29,6 +29,9 @@ const initTables = async () => {
         "password" TEXT NOT NULL,
         "name" TEXT,
         "role" TEXT NOT NULL DEFAULT 'USER',
+        "googleAccessToken" TEXT,
+        "googleRefreshToken" TEXT,
+        "googleTokenExpiry" DATETIME,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       );

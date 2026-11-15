@@ -17,7 +17,8 @@ export const GoogleConnectModal = () => {
   }
 
   const handleConnect = () => {
-    const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').replace(/['"]/g, '').trim();
+    const GOOGLE_CLIENT_ID_DEFAULT = '896070974157-k5hkgaavkpc7d48thlum85cr4rlv4ujg.apps.googleusercontent.com';
+    const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_DEFAULT).replace(/['"]/g, '').trim();
 
     if (clientId && window.google?.accounts?.oauth2) {
       setLoading(true);

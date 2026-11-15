@@ -11,8 +11,30 @@ const authRoutes = require('./routes/auth.routes');
 const emailRoutes = require('./routes/email.routes');
 const { errorHandler, notFound } = require('./middleware/error.middleware');
 const { frontendUrl } = require('./config/constants');
+const { connectDB } = require('./config/database');
 
 const app = express();
+
+let isDbReady = false;
+let dbInitPromise = null;
+
+// Ensure database connection and tables are ready before any request is handled
+app.use(async (req, res, next) => {
+  if (!isDbReady) {
+    if (!dbInitPromise) {
+      dbInitPromise = connectDB()
+        .then(() => {
+          isDbReady = true;
+        })
+        .catch((err) => {
+          console.error('Database connection error in request middleware:', err);
+          dbInitPromise = null;
+        });
+    }
+    await dbInitPromise;
+  }
+  next();
+});
 
 // Security headers (configured to allow Google Auth & fonts)
 app.use(
