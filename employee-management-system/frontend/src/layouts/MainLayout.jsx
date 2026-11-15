@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
-import { GoogleConnectModal } from '../components/GoogleConnectModal';
 
 export const MainLayout = () => {
   return (
@@ -14,7 +13,6 @@ export const MainLayout = () => {
           <Outlet />
         </main>
       </div>
-      <GoogleConnectModal />
     </div>
   );
 };
